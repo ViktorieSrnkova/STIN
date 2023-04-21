@@ -1,8 +1,8 @@
 import { ENV_EMAIL_PASSWORD, ENV_ENV } from 'const/env';
 import nodemailer from 'nodemailer';
 
-const NAME_EMAIL = 'Datinn';
-const BASE_EMAIL = 'noreply@datinn.io';
+const NAME_EMAIL = 'Viky';
+const BASE_EMAIL = 'vikinka.srnkova@seznam.cz';
 
 const transporter = nodemailer.createTransport({
 	host: 'smtp.seznam.cz',
