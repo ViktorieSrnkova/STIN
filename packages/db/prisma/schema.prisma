@@ -1,0 +1,109 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+    provider        = "prisma-client-js"
+    previewFeatures = []
+}
+
+//generator dbml {
+//provider = "prisma-dbml-generator"
+//}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+// -----------------------
+
+enum Currency {
+	CZK
+	EUR
+	USD
+}
+
+enum TransactionType {
+	DEPOSIT // vklad
+	WITHDRAWAL // výběr
+	TRANSFER // převod
+}
+
+model User {
+	// base entity schema
+	id									String				@id @default(uuid())
+	createdAt							DateTime			@default(now())
+	updatedAt 							DateTime 			@updatedAt
+	// ------------------------------------------------------------------------------------------------------------
+
+	email								String 				@unique
+	firstName							String
+	secondName							String
+	password							String
+
+	accounts							Account[]
+	userAuthCodes						UserAuthCode[]
+	transactions						Transaction[]
+}
+
+model UserAuthCode {
+	// base entity schema
+	id									String				@id @default(uuid())
+	createdAt							DateTime			@default(now())
+	updatedAt 							DateTime 			@updatedAt
+	// ------------------------------------------------------------------------------------------------------------
+
+	code								String
+	isUsed								Boolean				@default(false)
+
+	userId								String
+	user								User				@relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Account {
+	// base entity schema
+	id									String				@id @default(uuid())
+	createdAt							DateTime			@default(now())
+	updatedAt 							DateTime 			@updatedAt
+	// ------------------------------------------------------------------------------------------------------------
+
+	currency							Currency
+	accountNumber						String				@unique
+
+	userId								String
+	user								User				@relation(fields: [userId], references: [id], onDelete: Cascade)
+
+	sentTransactions					Transaction[]		@relation("fromAccount")
+	receivedTransactions				Transaction[]		@relation("toAccount")
+}
+
+model Transaction {
+	// base entity schema
+	id									String				@id @default(uuid())
+	createdAt							DateTime			@default(now())
+	updatedAt 							DateTime 			@updatedAt
+	// ------------------------------------------------------------------------------------------------------------
+
+	amount								Float
+	transactionType						TransactionType
+
+	fromAccountId						String?
+	fromAccount							Account?			@relation("fromAccount", fields: [fromAccountId], references: [id], onDelete: Cascade)
+
+	toAccountId							String?
+	toAccount							Account?			@relation("toAccount", fields: [toAccountId], references: [id], onDelete: Cascade)
+
+	userId								String
+	user								User				@relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model ExRate {
+	// base entity schema
+	id									String				@id @default(uuid())
+	createdAt							DateTime			@default(now())
+	updatedAt 							DateTime 			@updatedAt
+	// ------------------------------------------------------------------------------------------------------------
+
+	currency							Currency
+	exRate								Float
+}
