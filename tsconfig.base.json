@@ -1,12 +1,8 @@
 {
 	"exclude": [".yarn/*", "**/dist", "**/scripts"],
-	"include": [
-		"./packages/@types",
-	],
+	"include": ["./packages/@types"],
 	"compilerOptions": {
-		"types": [
-			"node",
-		],
+		"types": ["node"],
 		"useUnknownInCatchVariables": false,
 		"incremental": true,
 		"target": "ES2019",
@@ -27,9 +23,7 @@
 		"preserveWatchOutput": true,
 		"moduleResolution": "node",
 		"baseUrl": ".",
-		"paths": {
-			"@apengine/*": ["./packages/*/src"]
-		},
+		"paths": {},
 		"allowSyntheticDefaultImports": true,
 		"esModuleInterop": true,
 		"experimentalDecorators": true,
