@@ -35,9 +35,9 @@ export class AccountResolver {
 	@ResolveField(() => [TransactionDto])
 	transactions(@Parent() parent: Omit<AccountDto, 'transactions' | 'balance'>): Promise<TransactionDto[]> {
 		return this.prismaService.transaction.findMany({
-			where: { accountId: parent.id },
+			where: { toAccountId: parent.id },
 			orderBy: { createdAt: 'desc' },
-		});
+		}) as any;
 	}
 
 	@ResolveField(() => Float)

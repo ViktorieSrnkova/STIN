@@ -20,6 +20,8 @@
 		"@types/prettier": "^2.6.1",
 		"@typescript-eslint/eslint-plugin": "^5.25.0",
 		"@typescript-eslint/parser": "^5.25.0",
+		"ant": "^0.2.0",
+		"apollo": "^2.34.0",
 		"eslint": "^8.16.0",
 		"eslint-config-airbnb": "^18.2.1",
 		"eslint-config-prettier": "^8.5.0",
