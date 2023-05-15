@@ -39,7 +39,7 @@ const Header: React.FC = () => {
 					placement="bottom"
 					arrow
 				>
-					<Space>{user?.email ?? 'Možnosti'}</Space>
+					<Space>Možnosti</Space>
 				</Dropdown>
 			</Box>
 		</HeaderAntd>

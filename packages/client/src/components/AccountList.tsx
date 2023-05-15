@@ -29,9 +29,12 @@ const QUERY_ACCOUNT_TRANSACTIONS_LIST = gql`
 			id
 			createdAt
 			amount
+			amount2
+			beforeAmount
 			transactionType
 			fromAccountId
 			toAccountId
+			beforeCurrency
 		}
 	}
 `;
@@ -46,13 +49,16 @@ const AccountList: React.FC = () => {
 
 	if (activeAccounts) {
 		const activeAccount = data?.myAcounts.find(_ => _.id === activeAccounts);
+		let to: string;
+
+		const formattedNumber = activeAccount?.balance?.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
 
 		return (
 			<Box>
 				<Button onClick={() => setActiveAccounts(undefined)}>Zpět</Button>
 				<Divider />
 				<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'end' }}>
-					<h2> {` ${activeAccount?.balance} ${activeAccount?.currency}`} </h2>
+					<h2> {` ${formattedNumber} ${activeAccount?.currency}`} </h2>
 				</div>
 				<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
 					<h3> {`Číslo účtu: ${activeAccount?.accountNumber}`} </h3>
@@ -70,8 +76,10 @@ const AccountList: React.FC = () => {
 								const payingAcc = data?.myAcounts.find(_ => _.id === record.fromAccountId);
 								if (text === TransactionType.Transfer) {
 									if (record.fromAccountId === activeAccounts) {
+										to = '-';
 										return `Platba na účet ${paidAcc?.accountNumber}`;
 									} else {
+										to = '+';
 										return `Příchozí platba z účtu ${payingAcc?.accountNumber}`;
 									}
 								} else if (text === TransactionType.Deposit) {
@@ -111,7 +119,7 @@ const AccountList: React.FC = () => {
 							title: 'Hodnota',
 							dataIndex: 'amount',
 							render: (text, record) => {
-								const sign = text < 0 ? '-' : record.fromAccountId === activeAccounts ? '-' : '+';
+								const sign = text < 0 ? '' : record.fromAccountId === activeAccounts ? '-' : '+';
 								const currencySymbol =
 									activeAccount?.currency === 'CZK'
 										? 'Kč'
@@ -131,13 +139,49 @@ const AccountList: React.FC = () => {
 													fontSize: '16px',
 												}}
 											>
-												{sign}
-												{text}
-												{currencySymbol}
+												{record.beforeCurrency === activeAccount?.currency ? (
+													<>
+														{sign}
+														{record.beforeAmount
+															.toFixed(2)
+															.replace(/\B(?=(\d{3})+(?!\d))/g, ' ')}
+														{currencySymbol}
+													</>
+												) : record.amount2 ? (
+													to === '+' ? (
+														<>
+															{sign}
+															{record.amount
+																.toFixed(2)
+																.replace(/\B(?=(\d{3})+(?!\d))/g, ' ')}
+															{currencySymbol}
+														</>
+													) : (
+														<>
+															{sign}
+															{record.amount2
+																.toFixed(2)
+																.replace(/\B(?=(\d{3})+(?!\d))/g, ' ')}
+															{currencySymbol}
+														</>
+													)
+												) : (
+													<>
+														{sign}
+														{text.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ' ')}
+														{currencySymbol}
+													</>
+												)}
 											</span>
 											<span style={{ fontSize: '12px', display: 'block', marginTop: '5px' }}>
-												{text !== undefined && text > 0 && ` (${text}${currencySymbol})`}
-												{text !== undefined && text < 0 && ` (${-1 * text}${currencySymbol})`}
+												{text !== undefined &&
+													text > 0 &&
+													record.beforeCurrency !== activeAccount?.currency &&
+													` (${record.beforeAmount}${record.beforeCurrency})`}
+												{text !== undefined &&
+													text < 0 &&
+													record.beforeCurrency !== activeAccount?.currency &&
+													` (${-1 * text}${record.beforeCurrency})`}
 											</span>
 										</>
 									</div>
@@ -158,25 +202,34 @@ const AccountList: React.FC = () => {
 
 	return (
 		<>
-			<Collapse>
-				<Panel header="Vytvořit účet" key="1">
-					<CreateAccount onCreate={() => refetch()} />
-				</Panel>
-			</Collapse>
-			<br />
-			<Table
-				dataSource={data?.myAcounts ?? []}
-				loading={loading}
-				columns={[
-					{ title: 'Číslo účtu', dataIndex: 'accountNumber' },
-					{ title: 'Zůstatek', dataIndex: 'balance' },
-					{ title: 'Měna', dataIndex: 'currency' },
-					{
-						title: 'Historie',
-						render: _ => <Button onClick={() => setActiveAccounts(_.id)}>Otevřít</Button>,
-					},
-				]}
-			/>
+			<div style={{ marginLeft: '-15px' }}>
+				<Collapse>
+					<Panel header="Vytvořit účet" key="1">
+						<CreateAccount onCreate={() => refetch()} />
+					</Panel>
+				</Collapse>
+				<br />
+				<Table
+					dataSource={data?.myAcounts ?? []}
+					loading={loading}
+					style={{ fontSize: '12px' }}
+					columns={[
+						{ title: 'Číslo účtu', dataIndex: 'accountNumber' },
+						{
+							title: 'Zůstatek',
+							dataIndex: 'balance',
+							render: text => text.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ' '),
+							align: 'right',
+						},
+						{ title: 'Měna', dataIndex: 'currency', align: 'right' },
+						{
+							title: 'Historie',
+							render: _ => <Button onClick={() => setActiveAccounts(_.id)}>Otevřít</Button>,
+							align: 'center',
+						},
+					]}
+				/>
+			</div>
 		</>
 	);
 };

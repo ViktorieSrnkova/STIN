@@ -23,3 +23,9 @@ spusteni client
 ```
 yarn workspace @bank/client dev
 ```
+
+migrace
+
+```
+yarn workspace @bank/db migrate:full
+```

@@ -87,7 +87,10 @@ model Transaction {
 	updatedAt 							DateTime 			@updatedAt
 	// ------------------------------------------------------------------------------------------------------------
 
-	amount								Float
+	amount								Float				@default(0)
+	amount2								Float				@default(0)
+	beforeAmount						Float				@default(0)
+	beforeCurrency						String?				
 	transactionType						TransactionType
 
 	fromAccountId						String?

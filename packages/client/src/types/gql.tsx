@@ -81,6 +81,9 @@ export type QueryAccounTransactionsArgs = {
 export type TransactionDto = {
 	__typename?: 'TransactionDto';
 	amount: Scalars['Float'];
+	amount2: Scalars['Float'];
+	beforeAmount: Scalars['Float'];
+	beforeCurrency: Scalars['String'];
 	createdAt: Scalars['DateTime'];
 	fromAccountId?: Maybe<Scalars['String']>;
 	id: Scalars['String'];
