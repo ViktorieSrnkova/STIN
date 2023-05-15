@@ -21,6 +21,7 @@ import { AppProvider } from './contexts/AppContext';
 import LoginPage from './pages/LoginPage';
 import useApp from './hooks/useApp';
 import RegisterPage from './pages/RegisterPage';
+import './App.css';
 
 const { Content, Footer, Sider } = Layout;
 const container = document.getElementById('app')!;

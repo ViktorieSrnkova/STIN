@@ -5,9 +5,10 @@
 import { gql, useQuery } from '@apollo/client';
 import { Button, Collapse, Divider, Table } from 'antd';
 import { AccountDto, QueryAccounTransactionsArgs, TransactionDto, TransactionType } from 'types/gql';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import CreateAccount from './CreateAccount';
 import Box from './Box';
+import '../App.css';
 
 const { Panel } = Collapse;
 
@@ -42,10 +43,23 @@ const QUERY_ACCOUNT_TRANSACTIONS_LIST = gql`
 const AccountList: React.FC = () => {
 	const [activeAccounts, setActiveAccounts] = useState<string | undefined>();
 	const { data, loading, refetch } = useQuery<{ myAcounts: AccountDto[] }>(QUERY_ACCOUNT_LIST);
+	const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 	const { data: transactionsData, loading: transactionsLoading } = useQuery<
 		{ accounTransactions: TransactionDto[] },
 		QueryAccounTransactionsArgs
 	>(QUERY_ACCOUNT_TRANSACTIONS_LIST, { variables: { accountId: activeAccounts ?? '' }, skip: !activeAccounts });
+
+	useEffect(() => {
+		const handleResize = (): void => {
+			setIsMobile(window.innerWidth <= 768);
+		};
+
+		window.addEventListener('resize', handleResize);
+
+		return () => {
+			window.removeEventListener('resize', handleResize);
+		};
+	}, []);
 
 	if (activeAccounts) {
 		const activeAccount = data?.myAcounts.find(_ => _.id === activeAccounts);
@@ -54,15 +68,18 @@ const AccountList: React.FC = () => {
 		const formattedNumber = activeAccount?.balance?.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
 
 		return (
-			<Box>
-				<Button onClick={() => setActiveAccounts(undefined)}>Zpět</Button>
-				<Divider />
-				<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'end' }}>
-					<h2> {` ${formattedNumber} ${activeAccount?.currency}`} </h2>
+			<Box style={{ padding: '0px' }}>
+				<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+					<Button onClick={() => setActiveAccounts(undefined)}>Zpět</Button>
+					<h2 className="nadpis" style={{ marginTop: '5px' }}>
+						{' '}
+						{` ${formattedNumber} ${activeAccount?.currency}`}{' '}
+					</h2>
 				</div>
-				<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+				<div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'center', marginTop: '20px' }}>
 					<h3> {`Číslo účtu: ${activeAccount?.accountNumber}`} </h3>
 				</div>
+				<Divider style={{ marginTop: '0px' }} />
 
 				<Table
 					dataSource={transactionsData?.accounTransactions ?? []}
@@ -90,6 +107,7 @@ const AccountList: React.FC = () => {
 									return '';
 								}
 							},
+							className: 'smaller-mobile',
 						},
 
 						{
@@ -104,6 +122,7 @@ const AccountList: React.FC = () => {
 
 								return <>{dateF}</>;
 							},
+							className: 'smaller-mobile',
 						},
 						{
 							title: 'Čas',
@@ -114,6 +133,7 @@ const AccountList: React.FC = () => {
 
 								return <>{timeF}</>;
 							},
+							className: 'hide-on-mobile',
 						},
 						{
 							title: 'Hodnota',
@@ -136,8 +156,8 @@ const AccountList: React.FC = () => {
 											<span
 												style={{
 													color: sign === '+' ? '#86b41d' : '#cd463c',
-													fontSize: '16px',
 												}}
+												className="smaller-mobile-price"
 											>
 												{record.beforeCurrency === activeAccount?.currency ? (
 													<>
@@ -173,7 +193,7 @@ const AccountList: React.FC = () => {
 													</>
 												)}
 											</span>
-											<span style={{ fontSize: '12px', display: 'block', marginTop: '5px' }}>
+											<span style={{ display: 'block', marginTop: '5px' }}>
 												{text !== undefined &&
 													text > 0 &&
 													record.beforeCurrency !== activeAccount?.currency &&
@@ -188,11 +208,13 @@ const AccountList: React.FC = () => {
 								);
 							},
 							align: 'right',
+							className: 'smaller-mobile-price',
 						},
 						{
 							title: 'Měna',
 							dataIndex: 'currency',
 							render: () => activeAccount?.currency,
+							className: 'hide-on-mobile',
 						},
 					]}
 				/>
@@ -212,7 +234,7 @@ const AccountList: React.FC = () => {
 				<Table
 					dataSource={data?.myAcounts ?? []}
 					loading={loading}
-					style={{ fontSize: '12px' }}
+					style={{ fontSize: '10px' }}
 					columns={[
 						{ title: 'Číslo účtu', dataIndex: 'accountNumber' },
 						{
@@ -220,11 +242,16 @@ const AccountList: React.FC = () => {
 							dataIndex: 'balance',
 							render: text => text.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ' '),
 							align: 'right',
+							width: 150,
 						},
-						{ title: 'Měna', dataIndex: 'currency', align: 'right' },
+						{ title: 'Měna', dataIndex: 'currency', align: 'right', className: 'hide-on-mobile' },
 						{
 							title: 'Historie',
-							render: _ => <Button onClick={() => setActiveAccounts(_.id)}>Otevřít</Button>,
+							render: record => (
+								<Button className="history-button" onClick={() => setActiveAccounts(record.id)}>
+									{isMobile ? record.currency : 'Otevřít'}
+								</Button>
+							),
 							align: 'center',
 						},
 					]}
