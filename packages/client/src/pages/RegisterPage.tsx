@@ -56,7 +56,7 @@ const RegisterPage: React.FC = () => {
 						</Form.Item>
 
 						<Form.Item name="password" rules={[{ required: true, message: 'Please input your password!' }]}>
-							<Input.Password placeholder="Password" />
+							<Input.Password placeholder="Heslo" />
 						</Form.Item>
 
 						<Form.Item
@@ -74,12 +74,12 @@ const RegisterPage: React.FC = () => {
 								}),
 							]}
 						>
-							<Input.Password placeholder="Confirm Password" />
+							<Input.Password placeholder="Potvrdit heslo" />
 						</Form.Item>
 
 						<Form.Item>
 							<Button loading={loading} style={{ width: '100%' }} type="primary" htmlType="submit">
-								Register
+								Registrovat
 							</Button>
 						</Form.Item>
 					</Form>

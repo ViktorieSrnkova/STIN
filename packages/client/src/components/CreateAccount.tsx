@@ -53,6 +53,7 @@ const CreateAccount: React.FC<Props> = ({ onCreate }) => {
 			>
 				<Form.Item name="currency">
 					<Select
+						placeholder="měna"
 						style={{ width: '100%' }}
 						options={Object.values(Currency).map(c => ({ value: c, label: c }))}
 					/>

@@ -69,9 +69,9 @@ const CreateTransaction: React.FC = () => {
 			{contextHolder}
 			<Box>
 				<Radio.Group value={type} onChange={e => setType(e.target.value)}>
-					<Radio.Button value={TransactionType.Deposit}>Deposit</Radio.Button>
-					<Radio.Button value={TransactionType.Transfer}>Transfer</Radio.Button>
-					<Radio.Button value={TransactionType.Withdrawal}>Withdrawal</Radio.Button>
+					<Radio.Button value={TransactionType.Deposit}>Vklad</Radio.Button>
+					<Radio.Button value={TransactionType.Transfer}>Platba</Radio.Button>
+					<Radio.Button value={TransactionType.Withdrawal}>Výběr</Radio.Button>
 				</Radio.Group>
 				<Divider />
 				{type === TransactionType.Deposit && (
@@ -83,13 +83,14 @@ const CreateTransaction: React.FC = () => {
 						autoComplete="off"
 					>
 						<Form.Item name="toAccountNumber" rules={[{ required: true }]}>
-							<Input placeholder="toAccountNumber" />
+							<Input placeholder="číslo účtu" />
 						</Form.Item>
 						<Form.Item name="amount" rules={[{ required: true }]}>
-							<Input placeholder="amount" />
+							<Input placeholder="hodnota" />
 						</Form.Item>
 						<Form.Item name="currency" rules={[{ required: true }]}>
 							<Select
+								placeholder="měna"
 								style={{ width: '100%' }}
 								options={Object.values(Currency).map(c => ({ value: c, label: c }))}
 							/>
@@ -97,7 +98,7 @@ const CreateTransaction: React.FC = () => {
 						<Form.Item>
 							<Divider />
 							<Button loading={loading} style={{ width: '100%' }} type="primary" htmlType="submit">
-								Send
+								Vložit
 							</Button>
 						</Form.Item>
 					</Form>
@@ -112,18 +113,25 @@ const CreateTransaction: React.FC = () => {
 						autoComplete="off"
 					>
 						<Form.Item name="fromAccountNumber" rules={[{ required: true }]}>
-							<Input placeholder="fromAccountNumber" />
+							<Input placeholder="číslo účtu odesílatele" />
 						</Form.Item>
 						<Form.Item name="toAccountNumber" rules={[{ required: true }]}>
-							<Input placeholder="toAccountNumber" />
+							<Input placeholder="číslo účtu příjemce" />
 						</Form.Item>
 						<Form.Item name="amount" rules={[{ required: true }]}>
-							<Input placeholder="amount" />
+							<Input placeholder="hodnota" />
+						</Form.Item>
+						<Form.Item name="currency" rules={[{ required: true }]}>
+							<Select
+								placeholder="měna"
+								style={{ width: '100%' }}
+								options={Object.values(Currency).map(c => ({ value: c, label: c }))}
+							/>
 						</Form.Item>
 						<Form.Item>
 							<Divider />
 							<Button loading={loading} style={{ width: '100%' }} type="primary" htmlType="submit">
-								Send
+								Zaplatit
 							</Button>
 						</Form.Item>
 					</Form>
@@ -137,15 +145,22 @@ const CreateTransaction: React.FC = () => {
 						autoComplete="off"
 					>
 						<Form.Item name="fromAccountNumber" rules={[{ required: true }]}>
-							<Input placeholder="fromAccountNumber" />
+							<Input placeholder="číslo účtu" />
 						</Form.Item>
 						<Form.Item name="amount" rules={[{ required: true }]}>
-							<Input placeholder="amount" />
+							<Input placeholder="hodnota" />
+						</Form.Item>
+						<Form.Item name="currency" rules={[{ required: true }]}>
+							<Select
+								placeholder="měna"
+								style={{ width: '100%' }}
+								options={Object.values(Currency).map(c => ({ value: c, label: c }))}
+							/>
 						</Form.Item>
 						<Form.Item>
 							<Divider />
 							<Button loading={loading} style={{ width: '100%' }} type="primary" htmlType="submit">
-								Send
+								Vybrat
 							</Button>
 						</Form.Item>
 					</Form>

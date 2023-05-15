@@ -19,9 +19,8 @@ const Header: React.FC = () => {
 		>
 			<Box display="flex" alignItems="center">
 				<Link to="/">
-					<Box style={{ color: 'white', paddingLeft: '10px' }}>logo</Box>
+					<Box style={{ color: 'white', paddingLeft: '10px' }}>{user?.email}</Box>
 				</Link>
-				<Box style={{ color: 'white', paddingLeft: '25px' }}>logo2</Box>
 			</Box>
 			<Box display="flex" alignItems="center" style={{ cursor: 'pointer', color: 'white', paddingRight: '25px' }}>
 				<Dropdown
@@ -30,16 +29,8 @@ const Header: React.FC = () => {
 							{
 								key: '1',
 								label: (
-									<Link to="/settings">
-										<Button type="link">Settings</Button>
-									</Link>
-								),
-							},
-							{
-								key: '2',
-								label: (
 									<Button type="link" onClick={() => setUserJWT(undefined)}>
-										Logout
+										Odhlásit se
 									</Button>
 								),
 							},
@@ -48,7 +39,7 @@ const Header: React.FC = () => {
 					placement="bottom"
 					arrow
 				>
-					<Space>{user?.email ?? 'error'}</Space>
+					<Space>{user?.email ?? 'Možnosti'}</Space>
 				</Dropdown>
 			</Box>
 		</HeaderAntd>

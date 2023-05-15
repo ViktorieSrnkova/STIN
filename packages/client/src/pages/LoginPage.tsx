@@ -89,11 +89,7 @@ const LoginPage: React.FC = () => {
 						</Form.Item>
 
 						<Form.Item name="password" rules={[{ required: true, message: 'Please input your password!' }]}>
-							<Input.Password placeholder="Password" />
-						</Form.Item>
-
-						<Form.Item name="code">
-							<Input.Password placeholder="Code" />
+							<Input.Password placeholder="Heslo" />
 						</Form.Item>
 
 						<Form.Item>
@@ -107,8 +103,13 @@ const LoginPage: React.FC = () => {
 									btnRef.current = 'code';
 								}}
 							>
-								Send 2pa code
+								pošli bezpečnostní kód
 							</Button>
+
+							<Form.Item name="code">
+								<Input.Password placeholder="Kód" />
+							</Form.Item>
+
 							<Divider />
 							<Button
 								loading={loading}
@@ -126,7 +127,7 @@ const LoginPage: React.FC = () => {
 					</Form>
 					<Divider />
 					<Button type="link">
-						<Link to="/register">Register</Link>
+						<Link to="/register">Registrace</Link>
 					</Button>
 				</Card>
 			</div>

@@ -3,7 +3,7 @@ import AccountList from 'components/AccountList';
 import Page from 'components/Page';
 
 const HomePage: React.FC = () => (
-	<Page breadcrumb={[{ title: 'Home' }]}>
+	<Page breadcrumb={[{ title: 'Domů' }]}>
 		<Card>
 			<AccountList />
 		</Card>

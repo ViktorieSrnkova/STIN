@@ -3,7 +3,7 @@ import { Injectable, OnModuleInit } from '@nestjs/common';
 import { PrismaService } from 'modules/prisma/prisma.service';
 import { Currency } from '@prisma/client';
 
-const TARGET_CURRENCY = ['EUR', 'USD', 'CZK', 'GPB'];
+const TARGET_CURRENCY = ['EUR', 'USD', 'CZK', 'GBP'];
 const INTERVAL_FETCH = 28800000; // 8h
 const RATE_URL =
 	'https://cnb.cz/cs/financni-trhy/devizovy-trh/kurzy-devizoveho-trhu/kurzy-devizoveho-trhu/denni_kurz.txt';

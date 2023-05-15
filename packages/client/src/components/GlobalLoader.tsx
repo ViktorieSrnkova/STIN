@@ -5,7 +5,7 @@ const GlobalLoader: React.FC = () => (
 	<Box display="flex" alignItems="center" justifyContent="center">
 		<Spin size="large">
 			<Box display="flex" alignItems="center" justifyContent="center">
-				logo
+				logo456
 			</Box>
 		</Spin>
 	</Box>

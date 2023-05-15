@@ -43,8 +43,8 @@ const AppLayout: React.FC = () => {
 	const { pathname } = useLocation();
 
 	const MENU_ITEMS = [
-		getItem('Accounts', '/', <RocketOutlined />),
-		getItem('Create transaction', '/create-transaction', <RocketOutlined />),
+		getItem('Účty', '/', <RocketOutlined />),
+		getItem('Transakce', '/create-transaction', <RocketOutlined />),
 	];
 
 	if (user && user.state === 'super-admin') {
@@ -80,7 +80,7 @@ const AppLayout: React.FC = () => {
 					<Content>
 						<Outlet />
 					</Content>
-					<Footer style={{ textAlign: 'center' }}>Created by Viky Srnková</Footer>
+					<Footer style={{ textAlign: 'center' }}>Vytvořila Viky Srnková</Footer>
 				</Layout>
 			</Layout>
 		</>

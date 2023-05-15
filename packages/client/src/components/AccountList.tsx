@@ -1,3 +1,4 @@
+/* eslint-disable react/jsx-one-expression-per-line */
 /* eslint-disable no-else-return */
 /* eslint-disable indent */
 /* eslint-disable no-nested-ternary */
@@ -50,6 +51,13 @@ const AccountList: React.FC = () => {
 			<Box>
 				<Button onClick={() => setActiveAccounts(undefined)}>Zpět</Button>
 				<Divider />
+				<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'end' }}>
+					<h2> {` ${activeAccount?.balance} ${activeAccount?.currency}`} </h2>
+				</div>
+				<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+					<h3> {`Číslo účtu: ${activeAccount?.accountNumber}`} </h3>
+				</div>
+
 				<Table
 					dataSource={transactionsData?.accounTransactions ?? []}
 					loading={transactionsLoading}
@@ -102,8 +110,8 @@ const AccountList: React.FC = () => {
 						{
 							title: 'Hodnota',
 							dataIndex: 'amount',
-							render: text => {
-								const sign = text > 0 ? '+' : '';
+							render: (text, record) => {
+								const sign = text < 0 ? '-' : record.fromAccountId === activeAccounts ? '-' : '+';
 								const currencySymbol =
 									activeAccount?.currency === 'CZK'
 										? 'Kč'
@@ -117,7 +125,12 @@ const AccountList: React.FC = () => {
 								return (
 									<div style={{ textAlign: 'end' }}>
 										<>
-											<span style={{ color: text > 0 ? '#86b41d' : '#cd463c', fontSize: '16px' }}>
+											<span
+												style={{
+													color: sign === '+' ? '#86b41d' : '#cd463c',
+													fontSize: '16px',
+												}}
+											>
 												{sign}
 												{text}
 												{currencySymbol}
@@ -146,7 +159,7 @@ const AccountList: React.FC = () => {
 	return (
 		<>
 			<Collapse>
-				<Panel header="Create account" key="1">
+				<Panel header="Vytvořit účet" key="1">
 					<CreateAccount onCreate={() => refetch()} />
 				</Panel>
 			</Collapse>
