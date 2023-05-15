@@ -1,4 +1,4 @@
-import { Button, Dropdown, Layout, Space } from 'antd';
+import { Button, Dropdown, Layout, Menu } from 'antd';
 import useApp from 'hooks/useApp';
 import { Link } from 'react-router-dom';
 import Box from './Box';
@@ -7,6 +7,21 @@ const { Header: HeaderAntd } = Layout;
 
 const Header: React.FC = () => {
 	const { user, setUserJWT } = useApp();
+
+	const handleMenuClick = (): void => {
+		setUserJWT(undefined);
+	};
+
+	const menu = (
+		<Menu>
+			<Menu.Item key="1">
+				<Button type="link" onClick={handleMenuClick}>
+					Odhlásit se
+				</Button>
+			</Menu.Item>
+		</Menu>
+	);
+
 	return (
 		<HeaderAntd
 			style={{
@@ -23,23 +38,8 @@ const Header: React.FC = () => {
 				</Link>
 			</Box>
 			<Box display="flex" alignItems="center" style={{ cursor: 'pointer', color: 'white', paddingRight: '25px' }}>
-				<Dropdown
-					menu={{
-						items: [
-							{
-								key: '1',
-								label: (
-									<Button type="link" onClick={() => setUserJWT(undefined)}>
-										Odhlásit se
-									</Button>
-								),
-							},
-						],
-					}}
-					placement="bottom"
-					arrow
-				>
-					<Space>Možnosti</Space>
+				<Dropdown overlay={menu} trigger={['click']}>
+					<div>Možnosti</div>
 				</Dropdown>
 			</Box>
 		</HeaderAntd>

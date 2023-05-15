@@ -1,0 +1,28 @@
+.mobile-currency {
+	display: none;
+}
+.smaller-mobile {
+	font-size: 14px;
+}
+.smaller-mobile-price {
+	font-size: 16px;
+}
+@media (max-width: 768px) {
+	/* Adjust the max-width value as needed */
+	.hide-on-mobile {
+		display: none;
+	}
+	.mobile-currency {
+		display: inline;
+	}
+	.smaller-mobile {
+		font-size: 11px;
+	}
+	.smaller-mobile-price {
+		font-size: 12px;
+		width: 200px;
+	}
+	.nadpis {
+		font-size: 19px;
+	}
+}
