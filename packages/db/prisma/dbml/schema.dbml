@@ -63,6 +63,7 @@ Enum Currency {
   CZK
   EUR
   USD
+  GBP
 }
 
 Enum TransactionType {

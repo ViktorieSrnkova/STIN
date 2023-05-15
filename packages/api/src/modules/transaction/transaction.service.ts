@@ -48,12 +48,14 @@ export class TransactionService {
 		toAccountNumber?: string,
 	): Promise<boolean> {
 		if (currency) {
-			const lastRate = await this.prismaService.exRate.findFirstOrThrow({
-				where: { currency },
-				orderBy: { createdAt: 'desc' },
-			});
-			// eslint-disable-next-line no-console
-			console.log(lastRate.exRate);
+			if (currency !== 'CZK') {
+				const lastRate = await this.prismaService.exRate.findFirstOrThrow({
+					where: { currency },
+					orderBy: { createdAt: 'desc' },
+				});
+				// eslint-disable-next-line no-console
+				console.log(lastRate.exRate);
+			}
 		}
 
 		if (fromAccountNumber === toAccountNumber) {
@@ -91,7 +93,7 @@ export class TransactionService {
 
 		if (type === TransactionType.DEPOSIT) {
 			await this.prismaService.$transaction(async tx => {
-				const account = await tx.account.findFirst({ where: { accountNumber: fromAccountNumber, userId } });
+				const account = await tx.account.findFirst({ where: { accountNumber: toAccountNumber, userId } });
 				if (!account) {
 					throw new Error('Account not found');
 				}

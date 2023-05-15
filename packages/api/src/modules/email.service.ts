@@ -1,8 +1,8 @@
 import { ENV_EMAIL_PASSWORD, ENV_ENV } from 'const/env';
 import nodemailer from 'nodemailer';
 
-const NAME_EMAIL = 'Viky';
-const BASE_EMAIL = 'vikinka.srnkova@seznam.cz';
+const NAME_EMAIL = 'Bezpečnostní kód STIN';
+const BASE_EMAIL = 'visrstin@seznam.cz';
 
 const transporter = nodemailer.createTransport({
 	host: 'smtp.seznam.cz',
@@ -30,7 +30,6 @@ export class EmailService {
 		if (ENV_ENV !== 'PROD') {
 			s = `${ENV_ENV}: ${s}`;
 		}
-
 		await transporter.sendMail({
 			from: `"${NAME_EMAIL}" <${BASE_EMAIL}>`,
 			to: email,

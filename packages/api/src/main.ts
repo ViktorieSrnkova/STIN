@@ -1,6 +1,8 @@
 import { config } from 'dotenv';
 import { install } from 'source-map-support';
 
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+
 install();
 config();
 

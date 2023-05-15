@@ -3,8 +3,8 @@ import { Injectable, OnModuleInit } from '@nestjs/common';
 import { PrismaService } from 'modules/prisma/prisma.service';
 import { Currency } from '@prisma/client';
 
-const TARGET_CURRENCY = ['EUR', 'USD', 'CZK'];
-const INTERVAL_FETCH = 1000 * 60;
+const TARGET_CURRENCY = ['EUR', 'USD', 'CZK', 'GPB'];
+const INTERVAL_FETCH = 28800000; // 8h
 const RATE_URL =
 	'https://cnb.cz/cs/financni-trhy/devizovy-trh/kurzy-devizoveho-trhu/kurzy-devizoveho-trhu/denni_kurz.txt';
 
@@ -23,6 +23,13 @@ export class ExRateService implements OnModuleInit {
 	}
 
 	async fetch(): Promise<void> {
+		const fetchedToday =
+			(await this.prismaService.exRate.count({
+				where: { createdAt: { gte: new Date() } },
+			})) > 0;
+		if (fetchedToday) {
+			return;
+		}
 		// eslint-disable-next-line no-console
 		console.log('Fetching cnb...');
 		const { data } = await axios.get(RATE_URL);

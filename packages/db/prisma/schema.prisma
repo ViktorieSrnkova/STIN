@@ -21,7 +21,10 @@ enum Currency {
 	CZK
 	EUR
 	USD
+	GBP
 }
+
+
 
 enum TransactionType {
 	DEPOSIT // vklad

@@ -1,4 +1,5 @@
 import { Mutation, Resolver, Args } from '@nestjs/graphql';
+import { EmailService } from 'modules/email.service';
 import { UserService } from './user.service';
 
 @Resolver(() => Boolean)
@@ -22,5 +23,10 @@ export class UserResolver {
 		@Args('code') code: string,
 	): Promise<string> {
 		return this.userService.loginUserAuthCode(email, password, code);
+	}
+	@Mutation(() => Boolean)
+	async test(): Promise<boolean> {
+		await EmailService.send('jakubloffelmann@gmail.com', 'Test', 'Test');
+		return true as any;
 	}
 }
