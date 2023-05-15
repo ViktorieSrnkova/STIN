@@ -29,12 +29,8 @@ const QUERY_ACCOUNT_TRANSACTIONS_LIST = gql`
 			createdAt
 			amount
 			transactionType
-<<<<<<< HEAD
 			fromAccountId
 			toAccountId
-=======
-			amount
->>>>>>> b2a7bf86a83b3210be0fca7d69cb34c36bd8a519
 		}
 	}
 `;
@@ -48,24 +44,16 @@ const AccountList: React.FC = () => {
 	>(QUERY_ACCOUNT_TRANSACTIONS_LIST, { variables: { accountId: activeAccounts ?? '' }, skip: !activeAccounts });
 
 	if (activeAccounts) {
-<<<<<<< HEAD
 		const activeAccount = data?.myAcounts.find(_ => _.id === activeAccounts);
-		const accountsTransaction = transactionsData?.accounTransactions.find(_ => _.id === activeAccounts);
 
 		return (
 			<Box>
 				<Button onClick={() => setActiveAccounts(undefined)}>Zpět</Button>
-=======
-		return (
-			<Box>
-				<Button onClick={() => setActiveAccounts(undefined)}>Back</Button>
->>>>>>> b2a7bf86a83b3210be0fca7d69cb34c36bd8a519
 				<Divider />
 				<Table
 					dataSource={transactionsData?.accounTransactions ?? []}
 					loading={transactionsLoading}
 					columns={[
-<<<<<<< HEAD
 						{
 							title: 'Typ transakce',
 							dataIndex: 'transactionType',
@@ -149,11 +137,6 @@ const AccountList: React.FC = () => {
 							dataIndex: 'currency',
 							render: () => activeAccount?.currency,
 						},
-=======
-						{ title: 'createdAt', dataIndex: 'createdAt' },
-						{ title: 'id', dataIndex: 'id' },
-						{ title: 'amount', dataIndex: 'amount' },
->>>>>>> b2a7bf86a83b3210be0fca7d69cb34c36bd8a519
 					]}
 				/>
 			</Box>
@@ -172,7 +155,6 @@ const AccountList: React.FC = () => {
 				dataSource={data?.myAcounts ?? []}
 				loading={loading}
 				columns={[
-<<<<<<< HEAD
 					{ title: 'Číslo účtu', dataIndex: 'accountNumber' },
 					{ title: 'Zůstatek', dataIndex: 'balance' },
 					{ title: 'Měna', dataIndex: 'currency' },
@@ -180,12 +162,6 @@ const AccountList: React.FC = () => {
 						title: 'Historie',
 						render: _ => <Button onClick={() => setActiveAccounts(_.id)}>Otevřít</Button>,
 					},
-=======
-					{ title: 'accountNumber', dataIndex: 'accountNumber' },
-					{ title: 'balance', dataIndex: 'balance' },
-					{ title: 'currency', dataIndex: 'currency' },
-					{ title: 'action', render: _ => <Button onClick={() => setActiveAccounts(_.id)}>Open</Button> },
->>>>>>> b2a7bf86a83b3210be0fca7d69cb34c36bd8a519
 				]}
 			/>
 		</>

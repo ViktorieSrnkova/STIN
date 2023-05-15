@@ -1,5 +1,5 @@
 -- CreateEnum
-CREATE TYPE "Currency" AS ENUM ('CZK', 'EUR', 'USD');
+CREATE TYPE "Currency" AS ENUM ('CZK', 'EUR', 'USD', 'GBP');
 
 -- CreateEnum
 CREATE TYPE "TransactionType" AS ENUM ('DEPOSIT', 'WITHDRAWAL', 'TRANSFER');
