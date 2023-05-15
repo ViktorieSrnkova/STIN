@@ -6,8 +6,8 @@ import { JWTUser } from './jwt.types';
 export class AuthService {
 	constructor(private readonly jwtService: JwtService) {}
 
-	login(user: { id: string }): string {
-		const payload = { id: user.id };
+	login(user: { id: string; email: string }): string {
+		const payload = user;
 
 		return `Bearer ${this.jwtService.sign(payload)}`;
 	}

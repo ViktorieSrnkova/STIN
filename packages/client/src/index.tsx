@@ -61,26 +61,19 @@ const AppLayout: React.FC = () => {
 		<>
 			<Header />
 			<Layout style={{ minHeight: 'calc(100vh - 64px)' }}>
-				<Sider
-					style={{ padding: 0 }}
+				<Menu
+					style={{ display: 'flex', width: '100%' }}
 					theme="light"
-					collapsible
-					collapsed={collapsed}
-					onCollapse={() => setCollapsed(!collapsed)}
-				>
-					<Menu
-						style={{ display: 'flex', flexDirection: 'column', height: '100%' }}
-						theme="light"
-						mode="inline"
-						selectedKeys={[location.pathname]}
-						items={MENU_ITEMS}
-					/>
-				</Sider>
+					mode="horizontal"
+					selectedKeys={[location.pathname]}
+					items={MENU_ITEMS}
+				/>
+
 				<Layout className="site-layout">
 					<Content>
 						<Outlet />
 					</Content>
-					<Footer style={{ textAlign: 'center' }}>Vytvořila Viky Srnková</Footer>
+					<Footer style={{ textAlign: 'center' }}>Školní projekt, Viky Srnková</Footer>
 				</Layout>
 			</Layout>
 		</>

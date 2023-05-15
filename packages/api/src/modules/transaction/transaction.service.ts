@@ -1,3 +1,6 @@
+/* eslint-disable max-len */
+/* eslint-disable no-case-declarations */
+/* eslint-disable no-console */
 import { Injectable } from '@nestjs/common';
 import { Currency, TransactionType } from '@prisma/client';
 import { PrismaService } from 'modules/prisma/prisma.service';
@@ -7,7 +10,7 @@ export class TransactionService {
 	constructor(private readonly prismaService: PrismaService) {}
 
 	async getBalance(
-		accountId: string,
+		accountId?: string,
 		transaction?: Omit<PrismaService, '$connect' | '$disconnect' | '$on' | '$transaction' | '$use'>,
 	): Promise<number> {
 		const connection = transaction ?? this.prismaService;
@@ -38,6 +41,44 @@ export class TransactionService {
 
 		return (withdrawal._sum.amount ?? 0) * -1 + (depoit._sum.amount ?? 0);
 	}
+	async getAcountCurrency(accountId: string): Promise<string> {
+		const acc = await this.prismaService.account.findFirst({ where: { id: accountId } });
+		return acc?.currency ?? 'eror';
+	}
+
+	async getExRate(currency1?: Currency, currency2?: Currency): Promise<number> {
+		if (currency1 === currency2) {
+			return 1;
+		}
+		if (currency1 !== 'CZK' && currency2 !== 'CZK') {
+			const rate1 = await this.prismaService.exRate.findFirstOrThrow({
+				where: { currency: currency1 },
+				orderBy: { createdAt: 'desc' },
+			});
+			const rate2 = await this.prismaService.exRate.findFirstOrThrow({
+				where: { currency: currency2 },
+				orderBy: { createdAt: 'desc' },
+			});
+
+			return rate1.exRate / rate2.exRate;
+		}
+		if (currency1 === 'CZK') {
+			const rateFromCZK = await this.prismaService.exRate.findFirstOrThrow({
+				where: { currency: currency2 },
+				orderBy: { createdAt: 'desc' },
+			});
+
+			return 1 / rateFromCZK.exRate; // 150kč na dolary --> 150* (1/rate)
+		}
+		if (currency2 === 'CZK') {
+			const rateToCZK = await this.prismaService.exRate.findFirstOrThrow({
+				where: { currency: currency1 },
+				orderBy: { createdAt: 'desc' }, // 1$ == 21Kč --> 15$ na ceskej ucet 15* rate
+			});
+			return rateToCZK.exRate;
+		}
+		return 1;
+	}
 
 	async createTransaction(
 		userId: string,
@@ -48,96 +89,191 @@ export class TransactionService {
 		toAccountNumber?: string,
 	): Promise<boolean> {
 		if (currency) {
-			if (currency !== 'CZK') {
-				const lastRate = await this.prismaService.exRate.findFirstOrThrow({
-					where: { currency },
-					orderBy: { createdAt: 'desc' },
-				});
-				// eslint-disable-next-line no-console
-				console.log(lastRate.exRate);
+			const toAcc = await this.prismaService.account.findFirst({
+				where: { accountNumber: toAccountNumber },
+			});
+			const fromAcc = await this.prismaService.account.findFirst({
+				where: { accountNumber: fromAccountNumber },
+			});
+
+			if (fromAccountNumber === toAccountNumber) {
+				throw new Error('Účty se nemohou shodovat');
 			}
-		}
+			if (amount <= 0) {
+				throw new Error('Hodnota musí být vyšší než 0');
+			}
 
-		if (fromAccountNumber === toAccountNumber) {
-			throw new Error('Source and target account must be different');
-		}
-		if (amount <= 0) {
-			throw new Error('Amount must be greater than 0');
-		}
+			if (type === TransactionType.WITHDRAWAL) {
+				await this.prismaService.$transaction(async tx => {
+					const account = await tx.account.findFirst({
+						where: { accountNumber: fromAccountNumber, userId },
+					});
+					const czechAcc = await tx.account.findFirst({
+						where: { currency: 'CZK' },
+					});
+					const newAmount =
+						Math.round(amount * (await this.getExRate(currency, fromAcc?.currency)) * 100) / 100;
 
-		if (type === TransactionType.WITHDRAWAL) {
-			await this.prismaService.$transaction(async tx => {
-				const account = await tx.account.findFirst({ where: { accountNumber: fromAccountNumber, userId } });
-				if (!account) {
-					throw new Error('Account not found');
-				}
-				const balance = await this.getBalance(account.id, tx);
+					if (!account) {
+						throw new Error('Tento účet nebyl nalezen');
+					}
 
-				if (balance < amount) {
-					throw new Error('Insufficient funds');
-				}
-				await tx.transaction.create({
-					data: {
-						amount,
-						transactionType: TransactionType.WITHDRAWAL,
-						fromAccountId: account.id,
-						userId,
-					},
+					if (!czechAcc) {
+						throw new Error('Neexistuje český účet');
+					}
+
+					const balance = await this.getBalance(account.id, tx);
+
+					if (balance < newAmount && account.currency === 'CZK') {
+						throw new Error('Nedostatek financí');
+					} else if (balance < newAmount && account.currency !== 'CZK') {
+						const balanceCZ = await this.getBalance(czechAcc?.id, tx);
+						const czechAmount =
+							Math.round(amount * (await this.getExRate(currency, czechAcc?.currency)) * 100) / 100;
+						if (balanceCZ < czechAmount) {
+							throw new Error('Nedostatek financí na českém účtu');
+						}
+						await tx.transaction.create({
+							data: {
+								amount: czechAmount,
+								beforeAmount: amount,
+								beforeCurrency: currency,
+								transactionType: TransactionType.WITHDRAWAL,
+								fromAccountId: czechAcc?.id,
+								userId,
+							},
+						});
+					} else {
+						await tx.transaction.create({
+							data: {
+								amount: newAmount,
+								beforeAmount: amount,
+								beforeCurrency: currency,
+								transactionType: TransactionType.WITHDRAWAL,
+								fromAccountId: account.id,
+								userId,
+							},
+						});
+					}
+
+					return true;
 				});
 
 				return true;
-			});
+			}
 
-			return true;
-		}
+			if (type === TransactionType.DEPOSIT) {
+				await this.prismaService.$transaction(async tx => {
+					const account = await tx.account.findFirst({
+						where: { accountNumber: toAccountNumber, userId },
+					});
+					if (!account) {
+						throw new Error('Účet nenalezen');
+					}
 
-		if (type === TransactionType.DEPOSIT) {
-			await this.prismaService.$transaction(async tx => {
-				const account = await tx.account.findFirst({ where: { accountNumber: toAccountNumber, userId } });
-				if (!account) {
-					throw new Error('Account not found');
-				}
-				await tx.transaction.create({
-					data: {
-						amount,
-						transactionType: TransactionType.DEPOSIT,
-						toAccountId: account.id,
-						userId,
-					},
+					await tx.transaction.create({
+						data: {
+							amount: Math.round(amount * (await this.getExRate(currency, toAcc?.currency)) * 100) / 100,
+							beforeAmount: amount,
+							beforeCurrency: currency,
+							transactionType: TransactionType.DEPOSIT,
+							toAccountId: account.id,
+							userId,
+						},
+					});
 				});
-			});
 
-			return true;
-		}
+				return true;
+			}
 
-		if (type === TransactionType.TRANSFER) {
-			await this.prismaService.$transaction(async tx => {
-				const account1 = await tx.account.findFirst({ where: { accountNumber: fromAccountNumber, userId } });
-				if (!account1) {
-					throw new Error('Source account not found');
-				}
-				const balance = await this.getBalance(account1.id, tx);
+			if (type === TransactionType.TRANSFER) {
+				await this.prismaService.$transaction(async tx => {
+					const account1 = await tx.account.findFirst({
+						where: { accountNumber: fromAccountNumber, userId },
+					});
+					const czechAcc = await tx.account.findFirst({
+						where: { currency: 'CZK' },
+					});
+					const newAmount =
+						Math.round(amount * (await this.getExRate(currency, fromAcc?.currency)) * 100) / 100;
+					if (!account1) {
+						throw new Error('Účet odesílatele nenalezen');
+					}
+					const balance = await this.getBalance(account1.id, tx);
+					const account2 = await tx.account.findFirst({ where: { accountNumber: toAccountNumber } });
 
-				if (balance < amount) {
-					throw new Error('Insufficient funds');
-				}
+					if (balance < newAmount && account1.currency === 'CZK') {
+						throw new Error('Nedostatek financí');
+					} else if (balance < newAmount && account2?.currency === 'CZK') {
+						throw new Error('Nedostatek financí');
+					} else if (balance < newAmount && account1.currency !== 'CZK') {
+						const balanceCZ = await this.getBalance(czechAcc?.id, tx);
+						const czechAmountF =
+							Math.round(amount * (await this.getExRate(currency, czechAcc?.currency)) * 100) / 100;
+						const czechAmountT =
+							Math.round(amount * (await this.getExRate(czechAcc?.currency, account2?.currency)) * 100) /
+							100;
+						if (balanceCZ < czechAmountF) {
+							throw new Error('Nedostatek financí na českém účtu');
+						}
 
-				const account2 = await tx.account.findFirst({ where: { accountNumber: toAccountNumber } });
-				if (!account2) {
-					throw new Error('Target account not found');
-				}
-				await tx.transaction.create({
-					data: {
-						amount,
-						transactionType: TransactionType.TRANSFER,
-						fromAccountId: account1.id,
-						toAccountId: account2.id,
-						userId,
-					},
+						if (!account2) {
+							throw new Error('Cílový účet nenalezen');
+						}
+						if (account2.currency !== currency && currency !== 'CZK') {
+							await tx.transaction.create({
+								data: {
+									amount:
+										Math.round(amount * (await this.getExRate(currency, toAcc?.currency)) * 100) /
+										100,
+									amount2: czechAmountF,
+									transactionType: TransactionType.TRANSFER,
+									fromAccountId: czechAcc?.id,
+									toAccountId: account2.id,
+									userId,
+									beforeCurrency: currency,
+									beforeAmount: amount,
+								},
+							});
+						} else {
+							await tx.transaction.create({
+								data: {
+									amount: czechAmountT,
+									amount2: czechAmountF,
+									transactionType: TransactionType.TRANSFER,
+									fromAccountId: czechAcc?.id,
+									toAccountId: account2.id,
+									userId,
+									beforeCurrency: currency,
+									beforeAmount: amount,
+								},
+							});
+						}
+					} else {
+						if (!account2) {
+							throw new Error('Cílový účet nenalezen');
+						}
+
+						await tx.transaction.create({
+							data: {
+								amount:
+									Math.round(amount * (await this.getExRate(currency, toAcc?.currency)) * 100) / 100,
+								amount2:
+									Math.round(amount * (await this.getExRate(currency, fromAcc?.currency)) * 100) /
+									100,
+								transactionType: TransactionType.TRANSFER,
+								fromAccountId: account1.id,
+								toAccountId: account2.id,
+								userId,
+								beforeCurrency: currency,
+								beforeAmount: amount,
+							},
+						});
+					}
 				});
-			});
 
-			return true;
+				return true;
+			}
 		}
 
 		return Promise.resolve(true);

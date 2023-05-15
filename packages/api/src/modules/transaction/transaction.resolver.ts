@@ -1,5 +1,5 @@
 import { UseGuards } from '@nestjs/common';
-import { Args, Float, Mutation, Query, Resolver, ResolveField, Parent } from '@nestjs/graphql';
+import { Args, Float, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { CurrentUser } from 'modules/auth/decorators/user.decorator';
 import { JwtAuthGuard } from 'modules/auth/jwt-auth.guard';
 import { JWTUser } from 'modules/auth/jwt.types';
@@ -12,8 +12,8 @@ import { TransactionService } from './transaction.service';
 @Resolver(() => TransactionDto)
 export class TransactionResolver {
 	constructor(
-		private readonly prismaService: PrismaService,
 		private readonly transactionService: TransactionService,
+		private readonly prismaService: PrismaService,
 	) {}
 
 	@Query(() => [TransactionDto])
@@ -57,17 +57,5 @@ export class TransactionResolver {
 			},
 			orderBy: { createdAt: 'desc' },
 		}) as unknown as Promise<TransactionDto[]>;
-	}
-	@ResolveField()
-	amount(@Parent() transaction: TransactionDto, @CurrentUser() user: JWTUser): number {
-		if (transaction.transactionType === TransactionType.WITHDRAWAL) {
-			return -1 * transaction.amount;
-		}
-		if (transaction.transactionType === TransactionType.TRANSFER) {
-			if (user.id === transaction.fromAccountId) {
-				return -1 * transaction.amount;
-			}
-		}
-		return transaction.amount;
 	}
 }

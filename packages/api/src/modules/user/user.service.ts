@@ -52,7 +52,7 @@ export class UserService {
 	async loginUserAuthCode(email: string, password: string, code: string): Promise<string> {
 		const dbUser = await this.prismaService.user.findUniqueOrThrow({
 			where: { email },
-			select: { password: true, id: true },
+			select: { password: true, id: true, email: true },
 		});
 
 		const compareResponse = await bcrypt.compare(password, dbUser.password);
@@ -67,7 +67,7 @@ export class UserService {
 
 		if (code === dbAuthCode?.code) {
 			await this.prismaService.userAuthCode.updateMany({ where: { userId: dbUser.id }, data: { isUsed: true } });
-			return this.authService.login({ id: dbUser.id });
+			return this.authService.login({ id: dbUser.id, email: dbUser.email });
 		}
 
 		return 'nok';

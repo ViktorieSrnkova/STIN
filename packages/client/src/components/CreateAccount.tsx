@@ -1,11 +1,7 @@
-import { DownOutlined } from '@ant-design/icons';
 import { gql, useMutation } from '@apollo/client';
-import { Button, Card, Dropdown, Form, Select, Space, notification } from 'antd';
+import { Button, Form, Select, notification } from 'antd';
 import { useState } from 'react';
 import { Currency, MutationCreateAccountArgs } from 'types/gql';
-import { firstUC } from 'utils/string';
-
-const CURRENCY_LIST = Object.values(Currency);
 
 const MUTATION_CREATE_ACCOUNT = gql`
 	mutation createAccount($currency: Currency!) {
