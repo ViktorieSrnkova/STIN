@@ -47,10 +47,7 @@ export class TransactionService {
 	}
 
 	async getExRate(currency1?: Currency, currency2?: Currency): Promise<number> {
-		if (currency1 === currency2) {
-			return 1;
-		}
-		if (currency1 !== 'CZK' && currency2 !== 'CZK') {
+		if (currency1 !== 'CZK' && currency2 !== 'CZK' && currency1 !== currency2) {
 			const rate1 = await this.prismaService.exRate.findFirstOrThrow({
 				where: { currency: currency1 },
 				orderBy: { createdAt: 'desc' },
@@ -62,7 +59,7 @@ export class TransactionService {
 
 			return rate1.exRate / rate2.exRate;
 		}
-		if (currency1 === 'CZK') {
+		if (currency1 === 'CZK' && currency1 !== currency2) {
 			const rateFromCZK = await this.prismaService.exRate.findFirstOrThrow({
 				where: { currency: currency2 },
 				orderBy: { createdAt: 'desc' },
@@ -70,7 +67,7 @@ export class TransactionService {
 
 			return 1 / rateFromCZK.exRate; // 150kč na dolary --> 150* (1/rate)
 		}
-		if (currency2 === 'CZK') {
+		if (currency2 === 'CZK' && currency1 !== currency2) {
 			const rateToCZK = await this.prismaService.exRate.findFirstOrThrow({
 				where: { currency: currency1 },
 				orderBy: { createdAt: 'desc' }, // 1$ == 21Kč --> 15$ na ceskej ucet 15* rate
@@ -108,9 +105,7 @@ export class TransactionService {
 					const account = await tx.account.findFirst({
 						where: { accountNumber: fromAccountNumber, userId },
 					});
-					const czechAcc = await tx.account.findFirst({
-						where: { currency: 'CZK' },
-					});
+
 					const newAmount =
 						Math.round(amount * (await this.getExRate(currency, fromAcc?.currency)) * 100) / 100;
 
@@ -118,15 +113,17 @@ export class TransactionService {
 						throw new Error('Tento účet nebyl nalezen');
 					}
 
-					if (!czechAcc) {
-						throw new Error('Neexistuje český účet');
-					}
-
 					const balance = await this.getBalance(account.id, tx);
 
 					if (balance < newAmount && account.currency === 'CZK') {
 						throw new Error('Nedostatek financí');
 					} else if (balance < newAmount && account.currency !== 'CZK') {
+						const czechAcc = await tx.account.findFirst({
+							where: { currency: 'CZK' },
+						});
+						if (!czechAcc) {
+							throw new Error('Neexistuje český účet');
+						}
 						const balanceCZ = await this.getBalance(czechAcc?.id, tx);
 						const czechAmount =
 							Math.round(amount * (await this.getExRate(currency, czechAcc?.currency)) * 100) / 100;
@@ -202,9 +199,11 @@ export class TransactionService {
 					const balance = await this.getBalance(account1.id, tx);
 					const account2 = await tx.account.findFirst({ where: { accountNumber: toAccountNumber } });
 
+					if (!account2) {
+						throw new Error('Cílový účet nenalezen');
+					}
+
 					if (balance < newAmount && account1.currency === 'CZK') {
-						throw new Error('Nedostatek financí');
-					} else if (balance < newAmount && account2?.currency === 'CZK') {
 						throw new Error('Nedostatek financí');
 					} else if (balance < newAmount && account1.currency !== 'CZK') {
 						const balanceCZ = await this.getBalance(czechAcc?.id, tx);
@@ -217,43 +216,19 @@ export class TransactionService {
 							throw new Error('Nedostatek financí na českém účtu');
 						}
 
-						if (!account2) {
-							throw new Error('Cílový účet nenalezen');
-						}
-						if (account2.currency !== currency && currency !== 'CZK') {
-							await tx.transaction.create({
-								data: {
-									amount:
-										Math.round(amount * (await this.getExRate(currency, toAcc?.currency)) * 100) /
-										100,
-									amount2: czechAmountF,
-									transactionType: TransactionType.TRANSFER,
-									fromAccountId: czechAcc?.id,
-									toAccountId: account2.id,
-									userId,
-									beforeCurrency: currency,
-									beforeAmount: amount,
-								},
-							});
-						} else {
-							await tx.transaction.create({
-								data: {
-									amount: czechAmountT,
-									amount2: czechAmountF,
-									transactionType: TransactionType.TRANSFER,
-									fromAccountId: czechAcc?.id,
-									toAccountId: account2.id,
-									userId,
-									beforeCurrency: currency,
-									beforeAmount: amount,
-								},
-							});
-						}
+						await tx.transaction.create({
+							data: {
+								amount: czechAmountT,
+								amount2: czechAmountF,
+								transactionType: TransactionType.TRANSFER,
+								fromAccountId: czechAcc?.id,
+								toAccountId: account2.id,
+								userId,
+								beforeCurrency: currency,
+								beforeAmount: amount,
+							},
+						});
 					} else {
-						if (!account2) {
-							throw new Error('Cílový účet nenalezen');
-						}
-
 						await tx.transaction.create({
 							data: {
 								amount:

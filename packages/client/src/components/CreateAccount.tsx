@@ -56,7 +56,7 @@ const CreateAccount: React.FC<Props> = ({ onCreate }) => {
 				</Form.Item>
 				<Form.Item>
 					<Button loading={loading} style={{ width: '100%' }} type="primary" htmlType="submit">
-						Vytvořit účet
+						Vytvořit
 					</Button>
 				</Form.Item>
 			</Form>

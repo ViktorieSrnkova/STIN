@@ -31,7 +31,7 @@ export class ExRateService implements OnModuleInit {
 			return;
 		}
 		// eslint-disable-next-line no-console
-		console.log('Fetching cnb...');
+		// console.log('Fetching cnb...');
 		const { data } = await axios.get(RATE_URL);
 
 		const lines = data.split('\n');

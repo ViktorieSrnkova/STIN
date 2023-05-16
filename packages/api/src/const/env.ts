@@ -1,4 +1,4 @@
-const loadString = (path: string, allowValues?: string[]): string => {
+export const loadString = (path: string, allowValues?: string[]): string => {
 	const tmp = process.env[path];
 
 	if (!tmp) {
@@ -11,7 +11,7 @@ const loadString = (path: string, allowValues?: string[]): string => {
 
 	return tmp;
 };
-const loadNullableString = (path: string, allowValues?: string[]): undefined | string => {
+export const loadNullableString = (path: string, allowValues?: string[]): undefined | string => {
 	const tmp = process.env[path];
 
 	if (allowValues && !allowValues.includes(tmp ?? '')) {
@@ -21,7 +21,7 @@ const loadNullableString = (path: string, allowValues?: string[]): undefined | s
 	return tmp;
 };
 
-const loadNumber = (path: string): number => {
+export const loadNumber = (path: string): number => {
 	const tmp = process.env[path];
 
 	if (!tmp) {
@@ -30,7 +30,7 @@ const loadNumber = (path: string): number => {
 
 	return parseInt(tmp, 10);
 };
-const loadNulableNumber = (path: string): undefined | number => {
+export const loadNulableNumber = (path: string): undefined | number => {
 	const tmp = process.env[path];
 
 	if (tmp) {

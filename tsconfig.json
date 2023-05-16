@@ -1,8 +1,12 @@
 {
 	"extends": "./tsconfig.base.json",
-	"include": [
-		"./packages/@types",
-	],
+	"include": ["./packages/@types"],
 	"files": [],
-	"exclude": [".yarn/*", "**/dist"]
+	"exclude": [".yarn/*", "**/dist"],
+	"compilerOptions": {
+		"allowSyntheticDefaultImports": true,
+		"esModuleInterop": true,
+		"allowJs": true,
+		"types": ["jest"]
+	}
 }
