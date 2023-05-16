@@ -236,7 +236,7 @@ const AccountList: React.FC = () => {
 					loading={loading}
 					style={{ fontSize: '10px' }}
 					columns={[
-						{ title: 'Číslo účtu', dataIndex: 'accountNumber' },
+						{ title: 'Číslo účtu', dataIndex: 'accountNumber', align: 'center' },
 						{
 							title: 'Zůstatek',
 							dataIndex: 'balance',

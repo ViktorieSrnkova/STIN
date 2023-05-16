@@ -1,12 +1,7 @@
 {
 	"extends": "../../tsconfig.base.json",
-	"include": [
-		"../@types",
-		"src",
-	],
-	"exclude": [
-	  "**/dist"
-	],
+	"include": ["../@types", "src"],
+	"exclude": ["**/dist"],
 	"compilerOptions": {
 		"sourceMap": true,
 		"inlineSources": true,
@@ -17,7 +12,7 @@
 		"sourceRoot": "/",
 		"outDir": "dist",
 		"rootDir": "src",
+		"types": ["jest"],
 		"baseUrl": "src"
 	}
 }
-

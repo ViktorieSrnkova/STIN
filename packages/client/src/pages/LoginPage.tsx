@@ -29,6 +29,7 @@ const LoginPage: React.FC = () => {
 	);
 
 	const [api, contextHolder] = notification.useNotification();
+	const [formCompleted, setFormCompleted] = useState(false);
 	const onFinish = async (values: any): Promise<void> => {
 		try {
 			setLoading(true);
@@ -58,6 +59,9 @@ const LoginPage: React.FC = () => {
 			});
 		} finally {
 			setLoading(false);
+		}
+		if (values.email && values.password && values.code) {
+			setFormCompleted(true);
 		}
 	};
 	return (
@@ -107,7 +111,7 @@ const LoginPage: React.FC = () => {
 							</Button>
 
 							<Form.Item name="code">
-								<Input.Password placeholder="Kód" />
+								<Input.Password placeholder="Kód" onChange={() => setFormCompleted(true)} />
 							</Form.Item>
 
 							<Divider />
@@ -120,6 +124,7 @@ const LoginPage: React.FC = () => {
 								onClick={() => {
 									btnRef.current = 'login';
 								}}
+								disabled={!formCompleted}
 							>
 								Login
 							</Button>
