@@ -1,5 +1,5 @@
 import { Mutation, Resolver, Args } from '@nestjs/graphql';
-import { EmailService } from 'modules/email.service';
+import { EmailService } from '../email.service';
 import { UserService } from './user.service';
 
 @Resolver(() => Boolean)

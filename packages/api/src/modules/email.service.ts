@@ -1,5 +1,5 @@
-import { ENV_EMAIL_PASSWORD, ENV_ENV } from 'const/env';
 import nodemailer from 'nodemailer';
+import { ENV_EMAIL_PASSWORD, ENV_ENV } from '../const/env';
 
 const NAME_EMAIL = 'Bezpečnostní kód STIN';
 const BASE_EMAIL = 'visrstin@seznam.cz';

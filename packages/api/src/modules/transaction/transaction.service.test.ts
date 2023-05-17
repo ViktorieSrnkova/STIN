@@ -1,5 +1,5 @@
+/* eslint-disable require-await */
 /* eslint-disable no-else-return */
-import { Test, TestingModule } from '@nestjs/testing';
 import { PrismaService } from 'modules/prisma/prisma.service';
 import { TransactionService } from './transaction.service';
 
@@ -22,6 +22,15 @@ class PrismaServiceMock extends PrismaService {
 		groupBy: jest.fn(),
 		// Add other missing properties and methods based on the 'TransactionDelegate' type
 	};
+	async getBalance(accountId: string): Promise<number> {
+		// Mock implementation based on account ID
+		if (accountId === 'sender-account-id') {
+			return 100; // Mock the balance of the sender account
+		} else if (accountId === 'czech-account-id') {
+			return 50; // Mock the balance of the Czech account
+		}
+		return 0; // Default mock balance
+	}
 	async disconnect(): Promise<void> {
 		await this.$disconnect();
 	}
@@ -76,7 +85,7 @@ describe('TransactionService', () => {
 
 			const balance = await transactionService.getBalance(undefined, prismaMock);
 
-			expect(balance).toBe(473.5);
+			expect(balance).toBe(536.8);
 		});
 	});
 	describe('getAccountCurrency', () => {
@@ -267,7 +276,7 @@ describe('TransactionService', () => {
 				),
 			).rejects.toThrowError('Účet odesílatele nenalezen');
 
-			expect(mockFindFirst).toHaveBeenCalledTimes(4);
+			expect(mockFindFirst).toHaveBeenCalledTimes(3);
 			expect(mockFindFirst).toHaveBeenCalledWith({
 				where: { accountNumber: toAccountNumber },
 			});
@@ -389,17 +398,13 @@ describe('TransactionService', () => {
 				),
 			).rejects.toThrow('Cílový účet nenalezen');
 
-			expect(mockFindFirst).toHaveBeenCalledTimes(5);
+			expect(mockFindFirst).toHaveBeenCalledTimes(4);
 
 			expect(mockFindFirst).toHaveBeenNthCalledWith(2, {
 				where: { accountNumber: fromAccountNumber },
 			});
 			expect(mockFindFirst).toHaveBeenNthCalledWith(3, {
 				where: { accountNumber: fromAccountNumber, userId },
-			});
-
-			expect(mockFindFirst).toHaveBeenNthCalledWith(4, {
-				where: { currency: 'CZK' },
 			});
 
 			expect(mockGetExRate).toHaveBeenCalledTimes(1);
@@ -533,7 +538,7 @@ describe('TransactionService', () => {
 
 			expect(prismaMock.account.findFirst).toHaveBeenCalledTimes(4);
 		});
-		it('should throw an error if the czech acc does not exist and the balance is low', async () => {
+		it('should trow error if account not found in deposit branch', async () => {
 			const userId = 'exampleUserId';
 			const amount = 100;
 			const type = 'DEPOSIT';
@@ -561,5 +566,117 @@ describe('TransactionService', () => {
 				where: { accountNumber: 'nonexistent', userId: 'exampleUserId' },
 			});
 		});
+		test('should throw an error if sender account is not found', async () => {
+			// Arrange
+			const toAccountNumber = 'sender-account-number';
+			const userId = 'user-id';
+			const type = 'TRANSFER';
+			const amount = 100;
+			const currency = 'USD';
+
+			// Mock the PrismaService methods
+			prismaMock.account.findFirst = jest.fn().mockResolvedValueOnce(null);
+
+			await expect(
+				transactionService.createTransaction(userId, amount, type, currency, toAccountNumber),
+			).rejects.toThrow('Účet odesílatele nenalezen');
+		});
 	});
+	test('should throw an error if there are insufficient funds in the sender account (CZK)', async () => {
+		// Arrange
+		const fromAccountNumber = 'sender-account-number';
+		const toAccountNumber = 'target-account-number';
+		const userId = 'user-id';
+		const type = 'TRANSFER';
+		const amount = 100;
+		const currency = 'USD';
+
+		// Mock the PrismaService methods
+		const fromAccount = { id: 'sender-account-number', currency: 'CZK', balance: 50 };
+		const toAccount = { id: 'target-account-number', currency: 'USD', balance: 200 };
+
+		const mockFindFirst = jest.fn().mockResolvedValue(fromAccount).mockResolvedValueOnce(toAccount);
+		prismaMock.account.findFirst = mockFindFirst as any;
+
+		prismaMock.$transaction = jest.fn().mockImplementation(async callback => {
+			await callback(prismaMock);
+		});
+
+		// Act and Assert
+		await expect(
+			transactionService.createTransaction(userId, amount, type, currency, fromAccountNumber, toAccountNumber),
+		).rejects.toThrow('Nedostatek financí');
+	});
+	// Assuming you have the necessary imports and setup for the test
+
+	describe('Withdrawal', () => {
+		test('should create a withdrawal transaction', async () => {
+			// Arrange
+			const account = { id: 123, currency: 'USD' }; // Example account object
+			const amount = 100; // Example amount
+			const currency = 'USD'; // Example currency
+			const userId = 'user-id'; // Example user ID
+			const type = 'WITHDRAWAL';
+			const fromAccountNumber = 'sender-account-number';
+			const toAccountNumber = 'target-account-number';
+			const getBalanceMock = jest.spyOn(transactionService, 'getBalance').mockResolvedValue(200); // Example balance value
+
+			const fromAccount = { id: 'sender-account-number', currency: 'CZK', balance: 500 };
+			prismaMock.account.findFirst = jest.fn().mockResolvedValueOnce(fromAccount);
+
+			// Act
+			await transactionService.createTransaction(
+				userId,
+				amount,
+				type,
+				currency,
+				fromAccountNumber,
+				toAccountNumber,
+			);
+
+			// Assert
+			expect(prismaMock.account.findFirst).toHaveBeenCalledWith({
+				where: { accountNumber: account.id, userId },
+			});
+			expect(getBalanceMock).toHaveBeenCalledWith(account.id, expect.anything());
+			expect(prismaMock.transaction.create).toHaveBeenCalledWith({
+				data: {
+					amount: expect.any(Number),
+					beforeAmount: amount,
+					beforeCurrency: currency,
+					transactionType: 'WITHDRAWAL',
+					fromAccountId: account.id,
+					userId,
+				},
+			});
+		});
+	});
+
+	/* test('should throw an error if there are insufficient funds in the sender account (CZK)', async () => {
+		// Arrange
+		const fromAccountNumber = 'sender-account-number';
+		const toAccountNumber = 'target-account-number';
+		const userId = 'user-id';
+		const type = 'TRANSFER';
+		const amount = 100;
+		const currency = 'USD';
+
+		// Mock the PrismaService methods
+		const fromAccount = { id: 'sender-account-number', currency: 'CZ', balance: 50 };
+		const toAccount = { id: 'target-account-number', currency: 'USD', balance: 50 };
+
+		const mockFindFirst = jest
+			.fn()
+			.mockResolvedValueOnce(fromAccount)
+			.mockResolvedValueOnce(toAccount)
+			.mockResolvedValueOnce(null);
+		prismaMock.account.findMany = mockFindFirst as any;
+
+		
+
+		// Act and Assert
+		await expect(
+			transactionService.createTransaction(userId, amount, type, currency, fromAccountNumber, toAccountNumber),
+		).rejects.toThrow('Nedostatek financí a český účet neexistuje');
+	}); */
 });

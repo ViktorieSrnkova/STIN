@@ -1,10 +1,10 @@
 import { UseGuards } from '@nestjs/common';
 import { Args, Float, Mutation, Query, Resolver } from '@nestjs/graphql';
-import { CurrentUser } from 'modules/auth/decorators/user.decorator';
-import { JwtAuthGuard } from 'modules/auth/jwt-auth.guard';
-import { JWTUser } from 'modules/auth/jwt.types';
-import { PrismaService } from 'modules/prisma/prisma.service';
 import { Currency, TransactionType } from '@prisma/client';
+import { CurrentUser } from '../auth/decorators/user.decorator';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { JWTUser } from '../auth/jwt.types';
+import { PrismaService } from '../prisma/prisma.service';
 import { TransactionDto } from './transaction.dto';
 import { TransactionService } from './transaction.service';
 

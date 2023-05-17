@@ -3,7 +3,7 @@
 /* eslint-disable no-console */
 import { Injectable } from '@nestjs/common';
 import { Currency, TransactionType } from '@prisma/client';
-import { PrismaService } from 'modules/prisma/prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class TransactionService {
@@ -188,9 +188,7 @@ export class TransactionService {
 					const account1 = await tx.account.findFirst({
 						where: { accountNumber: fromAccountNumber, userId },
 					});
-					const czechAcc = await tx.account.findFirst({
-						where: { currency: 'CZK' },
-					});
+
 					const newAmount =
 						Math.round(amount * (await this.getExRate(currency, fromAcc?.currency)) * 100) / 100;
 					if (!account1) {
@@ -206,12 +204,16 @@ export class TransactionService {
 					if (balance < newAmount && account1.currency === 'CZK') {
 						throw new Error('Nedostatek financí');
 					} else if (balance < newAmount && account1.currency !== 'CZK') {
+						const czechAcc = await tx.account.findFirst({
+							where: { currency: 'CZK' },
+						});
+						if (!czechAcc) {
+							throw new Error('Nedostatek financí a český účet neexistuje');
+						}
 						const balanceCZ = await this.getBalance(czechAcc?.id, tx);
-						const czechAmountF =
-							Math.round(amount * (await this.getExRate(currency, czechAcc?.currency)) * 100) / 100;
+						const czechAmountF = Math.round(amount * (await this.getExRate(currency, 'CZK')) * 100) / 100;
 						const czechAmountT =
-							Math.round(amount * (await this.getExRate(czechAcc?.currency, account2?.currency)) * 100) /
-							100;
+							Math.round(amount * (await this.getExRate('CZK', account2?.currency)) * 100) / 100;
 						if (balanceCZ < czechAmountF) {
 							throw new Error('Nedostatek financí na českém účtu');
 						}

@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+    postgres:
+        image: postgres:10.3
+        restart: always
+        environment:
+            POSTGRES_USER: postgres
+            POSTGRES_PASSWORD: tohlejemojetajneheslo
+            POSTGRES_DB: postgres
+        ports:
+            - '5432:5432'
+        networks:
+            - node_network
+
+    api:
+        restart: always
+        build:
+            context: .
+            dockerfile: DockerfileApi
+        volumes:
+            - ./packages/api:/app
+            - ./packages/db:/app/db
+        depends_on:
+            - postgres
+        networks:
+            - node_network
+        ports:
+            - '2000:2000'
+
+    client:
+        build:
+            context: .
+            dockerfile: DockerfileClient
+        ports:
+            - '8000:80'
+        restart: always
+        volumes:
+            - ./packages/client:/app
+        links:
+            - api
+        depends_on:
+            - api
+        networks:
+            - node_network
+
+networks:
+    node_network:

@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { Injectable, OnModuleInit } from '@nestjs/common';
-import { PrismaService } from 'modules/prisma/prisma.service';
 import { Currency } from '@prisma/client';
+import { PrismaService } from '../prisma/prisma.service';
 
 const TARGET_CURRENCY = ['EUR', 'USD', 'CZK', 'GBP'];
 const INTERVAL_FETCH = 28800000; // 8h

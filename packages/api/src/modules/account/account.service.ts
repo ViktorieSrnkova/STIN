@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Currency } from '@prisma/client';
 import crypto from 'crypto';
-import { PrismaService } from 'modules/prisma/prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class AccountService {

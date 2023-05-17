@@ -1,6 +1,6 @@
 import { Field, ObjectType, registerEnumType, Float } from '@nestjs/graphql';
 import { Currency } from '@prisma/client';
-import { TransactionDto } from 'modules/transaction/transaction.dto';
+import { TransactionDto } from '../transaction/transaction.dto';
 
 registerEnumType(Currency, {
 	name: 'Currency',

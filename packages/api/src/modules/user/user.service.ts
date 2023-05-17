@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from 'modules/prisma/prisma.service';
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
-import { EmailService } from 'modules/email.service';
-import { AuthService } from 'modules/auth/auth.service';
+import { PrismaService } from '../prisma/prisma.service';
+import { EmailService } from '../email.service';
+import { AuthService } from '../auth/auth.service';
 
 const SALT_ROUNDS = 10;
 

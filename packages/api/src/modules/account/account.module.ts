@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
-import { PrismaModule } from 'modules/prisma/prisma.module';
-import { TransactionModule } from 'modules/transaction/transaction.module';
+import { TransactionModule } from '../transaction/transaction.module';
+import { PrismaModule } from '../prisma/prisma.module';
 import { AccountService } from './account.service';
 import { AccountResolver } from './account.resolver';
 

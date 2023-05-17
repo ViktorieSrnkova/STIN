@@ -1,0 +1,25 @@
+# dev stage
+FROM node:lts-alpine as build-stage
+WORKDIR /app
+COPY packages/api/package*.json ./
+RUN yarn install
+
+COPY packages/db/prisma/ /app/db/prisma/
+RUN yarn prisma generate --schema=./db/prisma/schema.prisma
+
+COPY packages/api/ /app
+COPY packages/api/tsconfig*.json ./
+COPY tsconfig.base.json /tsconfig.base.json
+
+RUN npm run build
+
+# production stage
+FROM node:lts-alpine as production-stage
+COPY --from=build-stage /app/dist ./dist
+COPY --from=build-stage /app/node_modules ./node_modules
+COPY --from=build-stage /app/package.json ./package.json
+COPY --from=build-stage /app/.env ./.env
+COPY --from=build-stage /app/db/prisma/ ./db/prisma/
+EXPOSE 2000
+
+CMD ["node", "dist/main.js"]

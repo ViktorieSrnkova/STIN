@@ -1,12 +1,12 @@
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import type { NestFastifyApplication } from '@nestjs/platform-fastify';
-import { FastifyAdapter } from '@nestjs/platform-fastify';
-import { AppModule } from 'app/app.module';
-import { ENV_PORT } from 'const/env';
 import fmp from '@fastify/multipart';
-import { PrismaService } from 'modules/prisma/prisma.service';
-import { enableExitSignalsHandling, registerShutdownCallback } from 'utils/process';
+import { FastifyAdapter } from '@nestjs/platform-fastify';
+import { AppModule } from './app/app.module';
+import { ENV_PORT } from './const/env';
+import { PrismaService } from './modules/prisma/prisma.service';
+import { enableExitSignalsHandling, registerShutdownCallback } from './utils/process';
 
 export const bootstrap = async (): Promise<void> => {
 	enableExitSignalsHandling();
