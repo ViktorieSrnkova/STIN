@@ -17,6 +17,8 @@ jobs:
       uses: actions/setup-node@v3
       with:
         node-version: ${{ matrix.node-version }}
-    - run: yarn install    
+    - run: yarn install
+    - run: yarn workspace @bank/db generate
+    - run: yarn workspace @bank/api prisma:generate
     - run: yarn test
     - run: yarn coverage
