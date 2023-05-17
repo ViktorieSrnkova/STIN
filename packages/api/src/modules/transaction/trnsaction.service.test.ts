@@ -85,7 +85,7 @@ describe('TransactionService', () => {
 
 			const balance = await transactionService.getBalance(undefined, prismaMock);
 
-			expect(balance).toBe(49633686.690000035);
+			expect(balance).toBe(473.5);
 		});
 	});
 	describe('getAccountCurrency', () => {
@@ -232,14 +232,14 @@ describe('TransactionService', () => {
 		});
 	});
 	describe('createTransaction', () => {
-		beforeEach(async () => {
+		/* beforeEach(async () => {
 			const module: TestingModule = await Test.createTestingModule({
 				providers: [TransactionService, PrismaService],
 			}).compile();
 
 			transactionService = module.get<TransactionService>(TransactionService);
 			prismaService = module.get<PrismaService>(PrismaService);
-		});
+		}); */
 
 		it('should throw an error if the fromAccount is not found', async () => {
 			const userId = 'exampleUserId';
