@@ -12,5 +12,9 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
 			await app.close();
 			await this.$disconnect();
 		});
+		/* this.$on('beforeExit', async () => {
+			await app.close();
+			await this.$disconnect();
+		}); */
 	}
 }

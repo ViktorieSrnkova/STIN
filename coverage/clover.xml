@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1684270616812" clover="3.2.0">
-  <project timestamp="1684270616812" name="All files">
-    <metrics statements="248" coveredstatements="207" conditionals="113" coveredconditionals="64" methods="53" coveredmethods="31" elements="414" coveredelements="302" complexity="0" loc="248" ncloc="248" packages="10" files="20" classes="20"/>
+<coverage generated="1684323382278" clover="3.2.0">
+  <project timestamp="1684323382278" name="All files">
+    <metrics statements="248" coveredstatements="207" conditionals="113" coveredconditionals="62" methods="53" coveredmethods="31" elements="414" coveredelements="300" complexity="0" loc="248" ncloc="248" packages="10" files="20" classes="20"/>
     <package name="app">
       <metrics statements="4" coveredstatements="4" conditionals="0" coveredconditionals="0" methods="1" coveredmethods="1"/>
       <file name="system.controller.ts" path="C:\Users\vikys.DESKTOP-2T2RQ13\Documents\1TULSchool1\STIN\semestral\STIN\packages\api\src\app\system.controller.ts">
@@ -183,7 +183,7 @@
       </file>
     </package>
     <package name="modules.transaction">
-      <metrics statements="121" coveredstatements="99" conditionals="111" coveredconditionals="63" methods="23" coveredmethods="13"/>
+      <metrics statements="121" coveredstatements="99" conditionals="111" coveredconditionals="61" methods="23" coveredmethods="13"/>
       <file name="transaction.dto.ts" path="C:\Users\vikys.DESKTOP-2T2RQ13\Documents\1TULSchool1\STIN\semestral\STIN\packages\api\src\modules\transaction\transaction.dto.ts">
         <metrics statements="13" coveredstatements="13" conditionals="0" coveredconditionals="0" methods="4" coveredmethods="0"/>
         <line num="1" count="6" type="stmt"/>
@@ -236,15 +236,15 @@
         <line num="48" count="1" type="stmt"/>
       </file>
       <file name="transaction.service.ts" path="C:\Users\vikys.DESKTOP-2T2RQ13\Documents\1TULSchool1\STIN\semestral\STIN\packages\api\src\modules\transaction\transaction.service.ts">
-        <metrics statements="79" coveredstatements="63" conditionals="111" coveredconditionals="63" methods="8" coveredmethods="8"/>
+        <metrics statements="79" coveredstatements="63" conditionals="111" coveredconditionals="61" methods="8" coveredmethods="8"/>
         <line num="4" count="5" type="stmt"/>
         <line num="5" count="5" type="stmt"/>
         <line num="6" count="5" type="stmt"/>
         <line num="9" count="5" type="stmt"/>
-        <line num="10" count="50" type="stmt"/>
+        <line num="10" count="38" type="stmt"/>
         <line num="16" count="8" type="cond" truecount="3" falsecount="1"/>
         <line num="17" count="8" type="stmt"/>
-        <line num="42" count="8" type="cond" truecount="8" falsecount="0"/>
+        <line num="42" count="8" type="cond" truecount="6" falsecount="2"/>
         <line num="45" count="2" type="stmt"/>
         <line num="46" count="2" type="cond" truecount="8" falsecount="0"/>
         <line num="50" count="14" type="cond" truecount="4" falsecount="0"/>
