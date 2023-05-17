@@ -4,5 +4,5 @@ kube
 **yarn-error.log
 **/node_modules/*
 .secret/**
-
+.env
 .yarn/install-state.gz

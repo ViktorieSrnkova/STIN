@@ -1,20 +1,21 @@
 # dev stage
-FROM node:lts-alpine as build-stage
+FROM node:latest as build-stage
 WORKDIR /app
-COPY packages/api/package*.json ./
+COPY packages/api/package*.json /app
 RUN yarn install
 
 COPY packages/db/prisma/ /app/db/prisma/
 RUN yarn prisma generate --schema=./db/prisma/schema.prisma
 
 COPY packages/api/ /app
-COPY packages/api/tsconfig*.json ./
+COPY packages/api/tsconfig*.json /app/
 COPY tsconfig.base.json /tsconfig.base.json
-
-RUN npm run build
+RUN npm install typescript -g
+RUN tsc --build /app/tsconfig.json
 
 # production stage
-FROM node:lts-alpine as production-stage
+RUN ls -la
+FROM node:latest as production-stage
 COPY --from=build-stage /app/dist ./dist
 COPY --from=build-stage /app/node_modules ./node_modules
 COPY --from=build-stage /app/package.json ./package.json
