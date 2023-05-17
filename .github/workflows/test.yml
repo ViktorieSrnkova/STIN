@@ -21,4 +21,3 @@ jobs:
     - run: yarn workspace @bank/db generate
     - run: yarn workspace @bank/api prisma:generate
     - run: yarn test
-    - run: yarn coverage
