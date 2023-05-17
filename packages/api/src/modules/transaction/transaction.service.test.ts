@@ -1,7 +1,6 @@
 /* eslint-disable no-else-return */
 import { Test, TestingModule } from '@nestjs/testing';
 import { PrismaService } from 'modules/prisma/prisma.service';
-import { Currency, TransactionType } from '@prisma/client';
 import { TransactionService } from './transaction.service';
 
 class PrismaServiceMock extends PrismaService {
@@ -23,28 +22,23 @@ class PrismaServiceMock extends PrismaService {
 		groupBy: jest.fn(),
 		// Add other missing properties and methods based on the 'TransactionDelegate' type
 	};
+	async disconnect(): Promise<void> {
+		await this.$disconnect();
+	}
 }
 
 describe('TransactionService', () => {
 	let transactionService: TransactionService;
-	let prismaService: PrismaService;
+	// let prismaService: PrismaService;
+	let prismaMock: PrismaServiceMock;
 
-	beforeEach(async () => {
-		const module: TestingModule = await Test.createTestingModule({
-			providers: [
-				TransactionService,
-				{
-					provide: PrismaService,
-					useClass: PrismaServiceMock,
-				},
-			],
-		}).compile();
-
-		transactionService = module.get<TransactionService>(TransactionService);
-		prismaService = module.get<PrismaService>(PrismaService);
+	beforeEach(() => {
+		prismaMock = new PrismaServiceMock();
+		transactionService = new TransactionService(prismaMock);
 	});
 
-	afterEach(() => {
+	afterEach(async () => {
+		await prismaMock.$disconnect();
 		jest.resetAllMocks();
 	});
 
@@ -54,7 +48,6 @@ describe('TransactionService', () => {
 			const withdrawalAmount = 200;
 			const depositAmount = 200;
 
-			const prismaMock = new PrismaServiceMock();
 			prismaMock.mockTransaction.aggregate.mockResolvedValueOnce({ _sum: { amount: withdrawalAmount } });
 			prismaMock.mockTransaction.aggregate.mockResolvedValueOnce({ _sum: { amount: depositAmount } });
 
@@ -67,7 +60,6 @@ describe('TransactionService', () => {
 		it('should return 0 if there are no transactions', async () => {
 			const accountId = 'exampleAccountId';
 
-			const prismaMock = new PrismaServiceMock();
 			prismaMock.mockTransaction.aggregate.mockResolvedValueOnce(null);
 
 			const balance = await transactionService.getBalance(accountId, prismaMock);
@@ -79,7 +71,6 @@ describe('TransactionService', () => {
 			const withdrawalAmount = 200;
 			const depositAmount = 300;
 
-			const prismaMock = new PrismaServiceMock();
 			prismaMock.mockTransaction.aggregate.mockResolvedValueOnce({ _sum: { amount: withdrawalAmount } });
 			prismaMock.mockTransaction.aggregate.mockResolvedValueOnce({ _sum: { amount: depositAmount } });
 
@@ -93,34 +84,34 @@ describe('TransactionService', () => {
 			const mockAccount = { currency: 'USD' };
 
 			// Mock the PrismaService account.findFirst() method to return a valid account
-			prismaService.account.findFirst = jest.fn().mockResolvedValueOnce(mockAccount);
+			prismaMock.account.findFirst = jest.fn().mockResolvedValueOnce(mockAccount);
 
 			// Instantiate the object under test
-			const yourObject = new TransactionService(prismaService); // Replace YourClass with the actual class name
+			const yourObject = new TransactionService(prismaMock); // Replace YourClass with the actual class name
 
 			// Invoke the method and assert the result
 			const result = await yourObject.getAcountCurrency('account123');
 			expect(result).toBe('USD');
 
 			// Verify that account.findFirst was called with the correct parameters
-			expect(prismaService.account.findFirst).toHaveBeenCalledTimes(1);
-			expect(prismaService.account.findFirst).toHaveBeenCalledWith({ where: { id: 'account123' } });
+			expect(prismaMock.account.findFirst).toHaveBeenCalledTimes(1);
+			expect(prismaMock.account.findFirst).toHaveBeenCalledWith({ where: { id: 'account123' } });
 		});
 
 		it('should return "error" when the account does not exist', async () => {
 			// Mock the PrismaService account.findFirst() method to return null
-			prismaService.account.findFirst = jest.fn().mockResolvedValueOnce(null);
+			prismaMock.account.findFirst = jest.fn().mockResolvedValueOnce(null);
 
 			// Instantiate the object under test
-			const yourObject = new TransactionService(prismaService); // Replace YourClass with the actual class name
+			const yourObject = new TransactionService(prismaMock); // Replace YourClass with the actual class name
 
 			// Invoke the method and assert the result
 			const result = await yourObject.getAcountCurrency('account123');
 			expect(result).toBe('eror');
 
 			// Verify that account.findFirst was called with the correct parameters
-			expect(prismaService.account.findFirst).toHaveBeenCalledTimes(1);
-			expect(prismaService.account.findFirst).toHaveBeenCalledWith({ where: { id: 'account123' } });
+			expect(prismaMock.account.findFirst).toHaveBeenCalledTimes(1);
+			expect(prismaMock.account.findFirst).toHaveBeenCalledWith({ where: { id: 'account123' } });
 		});
 		it('should return the account currency when the account exists', () => {
 			const mockAccount = {
@@ -140,16 +131,16 @@ describe('TransactionService', () => {
 	describe('getExRate', () => {
 		it('should return 1 when currency1 is the same as currency2', async () => {
 			// Instantiate the object under test
-			const yourObject = new TransactionService(prismaService); // Replace YourClass with the actual class name
+			const yourObject = new TransactionService(prismaMock); // Replace YourClass with the actual class name
 
 			// Invoke the method with the same currency and assert the result
 			const result = await yourObject.getExRate('USD', 'USD');
 			expect(result).toBe(1);
 		});
 		it('should return 1 when both currencies are CZK', async () => {
-			const yourObject = new TransactionService(prismaService);
+			const yourObject = new TransactionService(prismaMock);
 
-			const result = await yourObject.getExRate(Currency.CZK, Currency.CZK);
+			const result = await yourObject.getExRate('CZK', 'CZK');
 
 			expect(result).toBe(1);
 		});
@@ -159,25 +150,25 @@ describe('TransactionService', () => {
 			const mockRate2 = { exRate: 0.8 }; // Replace with a suitable mock rate
 
 			// Mock the PrismaService exRate.findFirstOrThrow() method to return the mock rates
-			prismaService.exRate.findFirstOrThrow = jest
+			prismaMock.exRate.findFirstOrThrow = jest
 				.fn()
 				.mockResolvedValueOnce(mockRate1)
 				.mockResolvedValueOnce(mockRate2);
 
 			// Instantiate the object under test
-			const yourObject = new TransactionService(prismaService); // Replace YourClass with the actual class name
+			const yourObject = new TransactionService(prismaMock); // Replace YourClass with the actual class name
 
 			// Invoke the method and assert the result
 			const result = await yourObject.getExRate('USD', 'EUR'); // Replace with suitable currencies
 			expect(result).toBe(mockRate1.exRate / mockRate2.exRate);
 
 			// Verify that exRate.findFirstOrThrow was called with the correct parameters
-			expect(prismaService.exRate.findFirstOrThrow).toHaveBeenCalledTimes(2);
-			expect(prismaService.exRate.findFirstOrThrow).toHaveBeenCalledWith({
+			expect(prismaMock.exRate.findFirstOrThrow).toHaveBeenCalledTimes(2);
+			expect(prismaMock.exRate.findFirstOrThrow).toHaveBeenCalledWith({
 				where: { currency: 'USD' },
 				orderBy: { createdAt: 'desc' },
 			});
-			expect(prismaService.exRate.findFirstOrThrow).toHaveBeenCalledWith({
+			expect(prismaMock.exRate.findFirstOrThrow).toHaveBeenCalledWith({
 				where: { currency: 'EUR' },
 				orderBy: { createdAt: 'desc' },
 			});
@@ -187,18 +178,18 @@ describe('TransactionService', () => {
 			const mockRateFromCZK = { exRate: 0.007 }; // Replace with a suitable mock rate
 
 			// Mock the PrismaService exRate.findFirstOrThrow() method to return the mock rate from CZK
-			prismaService.exRate.findFirstOrThrow = jest.fn().mockResolvedValueOnce(mockRateFromCZK);
+			prismaMock.exRate.findFirstOrThrow = jest.fn().mockResolvedValueOnce(mockRateFromCZK);
 
 			// Instantiate the object under test
-			const yourObject = new TransactionService(prismaService); // Replace YourClass with the actual class name
+			const yourObject = new TransactionService(prismaMock); // Replace YourClass with the actual class name
 
 			// Invoke the method with currency1 as CZK and assert the result
 			const result = await yourObject.getExRate('CZK', 'USD'); // Replace with a suitable currency
 			expect(result).toBe(1 / mockRateFromCZK.exRate);
 
 			// Verify that exRate.findFirstOrThrow was called with the correct parameters
-			expect(prismaService.exRate.findFirstOrThrow).toHaveBeenCalledTimes(1);
-			expect(prismaService.exRate.findFirstOrThrow).toHaveBeenCalledWith({
+			expect(prismaMock.exRate.findFirstOrThrow).toHaveBeenCalledTimes(1);
+			expect(prismaMock.exRate.findFirstOrThrow).toHaveBeenCalledWith({
 				where: { currency: 'USD' },
 				orderBy: { createdAt: 'desc' },
 			});
@@ -206,18 +197,18 @@ describe('TransactionService', () => {
 		it('should return the correct exchange rate when currency2 is CZK', async () => {
 			const mockRateToCZK = { exRate: 21 }; // Replace with a suitable mock rate
 			// Mock the PrismaService exRate.findFirstOrThrow() method to return the mock rate to CZK
-			prismaService.exRate.findFirstOrThrow = jest.fn().mockResolvedValueOnce(mockRateToCZK);
+			prismaMock.exRate.findFirstOrThrow = jest.fn().mockResolvedValueOnce(mockRateToCZK);
 
 			// Instantiate the object under test
-			const yourObject = new TransactionService(prismaService); // Replace YourClass with the actual class name
+			const yourObject = new TransactionService(prismaMock); // Replace YourClass with the actual class name
 
 			// Invoke the method with currency2 as CZK and assert the result
 			const result = await yourObject.getExRate('USD', 'CZK'); // Replace with a suitable currency
 			expect(result).toBe(mockRateToCZK.exRate);
 
 			// Verify that exRate.findFirstOrThrow was called with the correct parameters
-			expect(prismaService.exRate.findFirstOrThrow).toHaveBeenCalledTimes(1);
-			expect(prismaService.exRate.findFirstOrThrow).toHaveBeenCalledWith({
+			expect(prismaMock.exRate.findFirstOrThrow).toHaveBeenCalledTimes(1);
+			expect(prismaMock.exRate.findFirstOrThrow).toHaveBeenCalledWith({
 				where: { currency: 'USD' },
 				orderBy: { createdAt: 'desc' },
 			});
@@ -225,31 +216,22 @@ describe('TransactionService', () => {
 
 		it('should return 1 by default', async () => {
 			// Instantiate the object under test
-			const yourObject = new TransactionService(prismaService); // Replace YourClass with the actual class name
+			const yourObject = new TransactionService(prismaMock); // Replace YourClass with the actual class name
 			// Invoke the method without specifying currencies and assert the result
 			const result = await yourObject.getExRate();
 			expect(result).toBe(1);
 		});
 	});
 	describe('createTransaction', () => {
-		/* beforeEach(async () => {
-			const module: TestingModule = await Test.createTestingModule({
-				providers: [TransactionService, PrismaService],
-			}).compile();
-
-			transactionService = module.get<TransactionService>(TransactionService);
-			prismaService = module.get<PrismaService>(PrismaService);
-		}); */
-
 		it('should throw an error if the fromAccount is not found', async () => {
 			const userId = 'exampleUserId';
 			const amount = 100;
-			const type = TransactionType.WITHDRAWAL;
-			const currency = Currency.USD;
+			const type = 'WITHDRAWAL';
+			const currency = 'USD';
 			const fromAccountNumber = 'nonexistentAccountNumber';
 
 			const mockFindFirst = jest.fn().mockResolvedValue(null);
-			prismaService.account.findFirst = mockFindFirst as any;
+			prismaMock.account.findFirst = mockFindFirst as any;
 
 			await expect(
 				transactionService.createTransaction(userId, amount, type, currency, fromAccountNumber),
@@ -263,8 +245,8 @@ describe('TransactionService', () => {
 		it('should throw an error if the toAccount is not found (for transfer)', async () => {
 			const userId = 'exampleUserId';
 			const amount = 100;
-			const type = TransactionType.TRANSFER;
-			const currency = Currency.USD;
+			const type = 'TRANSFER';
+			const currency = 'USD';
 			const fromAccountNumber = 'exampleFromAccountNumber';
 			const toAccountNumber = 'nonexistentAccountNumber';
 
@@ -272,7 +254,7 @@ describe('TransactionService', () => {
 
 			const mockFindFirst = jest.fn();
 			mockFindFirst.mockResolvedValueOnce(fromAccount).mockResolvedValueOnce(null);
-			prismaService.account.findFirst = mockFindFirst as any;
+			prismaMock.account.findFirst = mockFindFirst as any;
 
 			await expect(
 				transactionService.createTransaction(
@@ -293,14 +275,14 @@ describe('TransactionService', () => {
 		it('should throw an error if the withdrawal amount exceeds the account balance', async () => {
 			const userId = 'exampleUserId';
 			const amount = 100;
-			const type = TransactionType.WITHDRAWAL;
-			const currency = Currency.USD;
+			const type = 'WITHDRAWAL';
+			const currency = 'USD';
 			const fromAccountNumber = 'exampleFromAccountNumber';
 
 			const fromAccount = { id: 'exampleFromAccountId', currency: 'CZK', balance: 50 };
 
 			const mockFindFirst = jest.fn().mockResolvedValue(fromAccount);
-			prismaService.account.findFirst = mockFindFirst as any;
+			prismaMock.account.findFirst = mockFindFirst as any;
 
 			await expect(
 				transactionService.createTransaction(userId, amount, type, currency, fromAccountNumber),
@@ -315,17 +297,17 @@ describe('TransactionService', () => {
 		it('should create a withdrawal transaction', async () => {
 			const userId = 'exampleUserId';
 			const amount = 100;
-			const type = TransactionType.WITHDRAWAL;
-			const currency = Currency.USD;
+			const type = 'WITHDRAWAL';
+			const currency = 'USD';
 			const fromAccountNumber = 'exampleFromAccountNumber';
 
 			const fromAccount = { id: 'exampleFromAccountId', currency: 'USD', balance: 50 };
 
 			const mockFindFirst = jest.fn().mockResolvedValue(fromAccount);
-			prismaService.account.findFirst = mockFindFirst as any;
+			prismaMock.account.findFirst = mockFindFirst as any;
 
-			prismaService.$transaction = jest.fn().mockImplementation(async callback => {
-				await callback(prismaService);
+			prismaMock.$transaction = jest.fn().mockImplementation(async callback => {
+				await callback(prismaMock);
 			});
 
 			await expect(
@@ -340,16 +322,16 @@ describe('TransactionService', () => {
 		it('should create a deposit transaction', async () => {
 			const userId = 'exampleUserId';
 			const amount = 100;
-			const type = TransactionType.DEPOSIT;
-			const currency = Currency.USD;
+			const type = 'DEPOSIT';
+			const currency = 'USD';
 			const toAccountNumber = 'exampleToAccountNumber';
 
 			const toAccount = { id: 'exampleToAccountId', currency: 'USD', balance: 0 };
 
 			const mockFindFirst = jest.fn().mockResolvedValue(toAccount);
-			prismaService.account.findFirst = mockFindFirst as any;
+			prismaMock.account.findFirst = mockFindFirst as any;
 
-			prismaService.transaction.create = jest.fn().mockResolvedValue(true);
+			prismaMock.transaction.create = jest.fn().mockResolvedValue(true);
 
 			await expect(
 				transactionService.createTransaction(userId, amount, type, currency, undefined, toAccountNumber),
@@ -360,8 +342,8 @@ describe('TransactionService', () => {
 				where: { accountNumber: toAccountNumber },
 			});
 
-			expect(prismaService.transaction.create).toHaveBeenCalledTimes(1);
-			expect(prismaService.transaction.create).toHaveBeenCalledWith({
+			expect(prismaMock.transaction.create).toHaveBeenCalledTimes(1);
+			expect(prismaMock.transaction.create).toHaveBeenCalledWith({
 				data: {
 					amount,
 					beforeAmount: amount,
@@ -375,8 +357,8 @@ describe('TransactionService', () => {
 		it('should create a transfer transaction', async () => {
 			const userId = 'exampleUserId';
 			const amount = 100;
-			const type = TransactionType.TRANSFER;
-			const currency = Currency.USD;
+			const type = 'TRANSFER';
+			const currency = 'USD';
 			const fromAccountNumber = 'exampleFromAccountNumber';
 			const toAccountNumber = 'exampleToAccountNumber';
 
@@ -388,10 +370,10 @@ describe('TransactionService', () => {
 				.mockResolvedValueOnce(fromAccount)
 				.mockResolvedValueOnce(null)
 				.mockResolvedValueOnce(czechAccount);
-			prismaService.account.findFirst = mockFindFirst as any;
+			prismaMock.account.findFirst = mockFindFirst as any;
 
 			const mockTransactionCreate = jest.fn().mockResolvedValue(true);
-			prismaService.transaction.create = mockTransactionCreate;
+			prismaMock.transaction.create = mockTransactionCreate;
 
 			const mockGetExRate = jest.fn().mockResolvedValue(1.5);
 			transactionService.getExRate = mockGetExRate;
@@ -428,8 +410,8 @@ describe('TransactionService', () => {
 		it('should throw an error if the "fromAccountNumber" and "toAccountNumber" are the same', async () => {
 			const userId = 'exampleUserId';
 			const amount = 100;
-			const type = TransactionType.WITHDRAWAL;
-			const currency: Currency = 'USD';
+			const type = 'WITHDRAWAL';
+			const currency = 'USD';
 			const fromAccountNumber = '123';
 			const toAccountNumber = '123';
 
@@ -447,8 +429,8 @@ describe('TransactionService', () => {
 		it('should throw an error if the amount is less than or equal to 0', async () => {
 			const userId = 'exampleUserId';
 			const amount = 0;
-			const type = TransactionType.WITHDRAWAL;
-			const currency: Currency = 'USD';
+			const type = 'WITHDRAWAL';
+			const currency = 'USD';
 			const fromAccountNumber = '123';
 			const toAccountNumber = '456';
 
@@ -466,13 +448,13 @@ describe('TransactionService', () => {
 		it('should throw an error if the "fromAccountNumber" does not exist', async () => {
 			const userId = 'exampleUserId';
 			const amount = 100;
-			const type = TransactionType.WITHDRAWAL;
-			const currency: Currency = 'USD';
+			const type = 'WITHDRAWAL';
+			const currency = 'USD';
 			const fromAccountNumber = 'nonexistent';
 			const toAccountNumber = '456';
 
 			// Mock the PrismaService account.findFirst() method to return null for the "fromAccountNumber"
-			prismaService.account.findFirst = jest.fn().mockResolvedValueOnce(null);
+			prismaMock.account.findFirst = jest.fn().mockResolvedValueOnce(null);
 
 			await expect(
 				transactionService.createTransaction(
@@ -486,21 +468,21 @@ describe('TransactionService', () => {
 			).rejects.toThrowError('Tento účet nebyl nalezen');
 
 			// Verify that account.findFirst was called with the correct parameters
-			expect(prismaService.account.findFirst).toHaveBeenCalledTimes(3);
-			expect(prismaService.account.findFirst).toHaveBeenCalledWith({
+			expect(prismaMock.account.findFirst).toHaveBeenCalledTimes(3);
+			expect(prismaMock.account.findFirst).toHaveBeenCalledWith({
 				where: { accountNumber: 'nonexistent', userId: 'exampleUserId' },
 			});
 		});
 		it('should throw an error if the czech acc does not exist and the balance is low', async () => {
 			const userId = 'exampleUserId';
 			const amount = 100;
-			const type = TransactionType.WITHDRAWAL;
-			const currency: Currency = 'USD';
+			const type = 'WITHDRAWAL';
+			const currency = 'USD';
 			const fromAccountNumber = 'nonexistent';
 			const toAccountNumber = '456';
 
 			// Mock the PrismaService account.findFirst() method to return null for the "fromAccountNumber"
-			prismaService.account.findFirst = jest.fn().mockResolvedValueOnce(null);
+			prismaMock.account.findFirst = jest.fn().mockResolvedValueOnce(null);
 
 			await expect(
 				transactionService.createTransaction(
@@ -514,16 +496,16 @@ describe('TransactionService', () => {
 			).rejects.toThrowError('Tento účet nebyl nalezen');
 
 			// Verify that account.findFirst was called with the correct parameters
-			expect(prismaService.account.findFirst).toHaveBeenCalledTimes(3);
-			expect(prismaService.account.findFirst).toHaveBeenCalledWith({
+			expect(prismaMock.account.findFirst).toHaveBeenCalledTimes(3);
+			expect(prismaMock.account.findFirst).toHaveBeenCalledWith({
 				where: { accountNumber: 'nonexistent', userId: 'exampleUserId' },
 			});
 		});
 		it('should throw an error if the czech acc does not exist and the balance is low', async () => {
 			const userId = 'exampleUserId';
 			const amount = 100;
-			const type = TransactionType.WITHDRAWAL;
-			const currency = Currency.USD;
+			const type = 'WITHDRAWAL';
+			const currency = 'USD';
 			const fromAccountNumber = 'exampleFromAccountNumber';
 
 			const fromAccount = { id: 'exampleFromAccountId', currency: 'USD', balance: 50 };
@@ -537,10 +519,10 @@ describe('TransactionService', () => {
 					return Promise.resolve(fromAccount); // Return the fromAccount when currency is not 'CZK'
 				}
 			});
-			prismaService.account.findFirst = mockFindFirst as any;
+			prismaMock.account.findFirst = mockFindFirst as any;
 
 			const mockTransactionCreate = jest.fn().mockResolvedValue(true);
-			prismaService.transaction.create = mockTransactionCreate;
+			prismaMock.transaction.create = mockTransactionCreate;
 
 			const mockGetExRate = jest.fn().mockResolvedValue(1.5);
 			transactionService.getExRate = mockGetExRate;
@@ -549,18 +531,18 @@ describe('TransactionService', () => {
 				transactionService.createTransaction(userId, amount, type, currency, fromAccountNumber),
 			).rejects.toThrow('Neexistuje český účet');
 
-			expect(prismaService.account.findFirst).toHaveBeenCalledTimes(4);
+			expect(prismaMock.account.findFirst).toHaveBeenCalledTimes(4);
 		});
 		it('should throw an error if the czech acc does not exist and the balance is low', async () => {
 			const userId = 'exampleUserId';
 			const amount = 100;
-			const type = TransactionType.DEPOSIT;
-			const currency: Currency = 'USD';
+			const type = 'DEPOSIT';
+			const currency = 'USD';
 			const toAccountNumber = 'nonexistent';
 			const fromAccountNumber = '456';
 
 			// Mock the PrismaService account.findFirst() method to return null for the "fromAccountNumber"
-			prismaService.account.findFirst = jest.fn().mockResolvedValueOnce(null);
+			prismaMock.account.findFirst = jest.fn().mockResolvedValueOnce(null);
 
 			await expect(
 				transactionService.createTransaction(
@@ -574,8 +556,8 @@ describe('TransactionService', () => {
 			).rejects.toThrowError('Účet nenalezen');
 
 			// Verify that account.findFirst was called with the correct parameters
-			expect(prismaService.account.findFirst).toHaveBeenCalledTimes(3);
-			expect(prismaService.account.findFirst).toHaveBeenCalledWith({
+			expect(prismaMock.account.findFirst).toHaveBeenCalledTimes(3);
+			expect(prismaMock.account.findFirst).toHaveBeenCalledWith({
 				where: { accountNumber: 'nonexistent', userId: 'exampleUserId' },
 			});
 		});

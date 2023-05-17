@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { PrismaService } from 'modules/prisma/prisma.service';
+import { Prisma } from '@prisma/client';
 import { ExRateService } from './ex-rate.service';
 
 jest.mock('axios');
@@ -91,6 +92,20 @@ Country4|CurrencyName4|Amount4|CurrencyCode4|Rate4`;
 			saveCurrency(currencyCode, TARGET_CURRENCY, toSave, rate);
 
 			expect(toSave).toEqual([]);
+		});
+		it('should handle error when axios.get fails', async () => {
+			jest.spyOn(axios, 'get').mockRejectedValue(new Error('Failed to fetch rates'));
+
+			await expect(exRateService.fetch()).rejects.toThrow('Failed to fetch rates');
+
+			expect(axios.get).toHaveBeenCalled();
+		});
+		it('should not save rates when fetched data is empty', async () => {
+			(axios.get as jest.Mock).mockResolvedValue({ data: '' });
+
+			await exRateService.fetch();
+
+			expect(axios.get).toHaveBeenCalled();
 		});
 	});
 
