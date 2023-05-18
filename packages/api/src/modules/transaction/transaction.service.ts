@@ -213,7 +213,7 @@ export class TransactionService {
 						const balanceCZ = await this.getBalance(czechAcc?.id, tx);
 						const czechAmountF = Math.round(amount * (await this.getExRate(currency, 'CZK')) * 100) / 100;
 						const czechAmountT =
-							Math.round(amount * (await this.getExRate('CZK', account2?.currency)) * 100) / 100;
+							Math.round(amount * (await this.getExRate(currency, account2?.currency)) * 100) / 100;
 						if (balanceCZ < czechAmountF) {
 							throw new Error('Nedostatek financí na českém účtu');
 						}
