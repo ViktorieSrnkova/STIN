@@ -1,7 +1,7 @@
 import { ApolloClient, HttpLink, InMemoryCache } from '@apollo/client';
-
 // todo
-const ENV_API = 'http://localhost:2000';
+
+const ENV_API = process.env.REACT_APP_PUBLIC_API;
 
 const OverrideCache = new Proxy(new InMemoryCache(), {
 	get(target, name, receiver) {

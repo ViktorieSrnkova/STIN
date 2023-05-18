@@ -12,7 +12,8 @@ services:
             - '5432:5432'
         networks:
             - node_network
-
+        volumes:
+            - db:/var/lib/postgresql/data
     api:
         restart: always
         build:
@@ -46,3 +47,6 @@ services:
 
 networks:
     node_network:
+volumes:
+    db:
+        driver: local

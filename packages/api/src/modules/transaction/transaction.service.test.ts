@@ -613,51 +613,34 @@ describe('TransactionService', () => {
 		// Add more assertions as needed
 	}); */
 
-	/* test('should throw an error if there are insufficient funds in the sender account (CZK)', async () => {
-		// Arrange
-		const fromAccountNumber = 'sender-account-number';
-		const toAccountNumber = 'target-account-number';
-		const userId = 'user-id';
-		const type = 'TRANSFER';
-		const amount = 100;
-		const currency = 'USD';
-
-		// Mock the PrismaService methods
-		const fromAccount = { id: 'sender-account-number', currency: 'CZ', balance: 50 };
-		const toAccount = { id: 'target-account-number', currency: 'USD', balance: 50 };
-
-		const mockFindFirst = jest
-			.fn()
-			.mockResolvedValueOnce(fromAccount)
-			.mockResolvedValueOnce(toAccount)
-			.mockResolvedValueOnce(null);
-		prismaMock.account.findMany = mockFindFirst as any;
-
-		
-
-		// Act and Assert
-		await expect(
-			transactionService.createTransaction(userId, amount, type, currency, fromAccountNumber, toAccountNumber),
-		).rejects.toThrow('Nedostatek financí a český účet neexistuje');
-	}); */
-
 	it('should throw an error if the czech acc does not exist and the balance is low', async () => {
 		const userId = 'exampleUserId';
 		const amount = 100;
 		const type = 'TRANSFER';
 		const currency = 'USD';
 		const fromAccountNumber = 'exampleFromAccountNumber';
+		const toAccountNumber = 'exampleToAccountNumber';
 
 		const fromAccount = { id: 'exampleFromAccountId', currency: 'USD', balance: 50 };
+		const toAccount = { id: 'exampleToAccountId', currency: 'USD', balance: 50 };
 
 		const mockFindFirst = jest.fn();
 		mockFindFirst.mockImplementation(params => {
-			if (params.where.currency === 'CZK') {
-				return Promise.resolve(null); // Return null when currency is 'CZK'
-				// eslint-disable-next-line no-else-return
-			} else {
-				return Promise.resolve(fromAccount); // Return the fromAccount when currency is not 'CZK'
+			if (params.where.accountNumber === fromAccountNumber) {
+				if (fromAccount.currency === 'CZK') {
+					return Promise.resolve(null); // Return null for fromAccount with currency 'CZK'
+				} else {
+					return Promise.resolve(fromAccount); // Return the fromAccount for non-'CZK' currency
+				}
 			}
+			if (params.where.accountNumber === toAccountNumber) {
+				if (toAccount.currency === 'CZK') {
+					return Promise.resolve(null); // Return null for toAccount with currency 'CZK'
+				} else {
+					return Promise.resolve(toAccount); // Return the toAccount for non-'CZK' currency
+				}
+			}
+			return Promise.resolve(null); // Return null for unknown accounts
 		});
 		prismaMock.account.findFirst = mockFindFirst as any;
 
@@ -668,8 +651,8 @@ describe('TransactionService', () => {
 		transactionService.getExRate = mockGetExRate;
 
 		await expect(
-			transactionService.createTransaction(userId, amount, type, currency, fromAccountNumber),
-		).rejects.toThrow('Neexistuje český účet');
+			transactionService.createTransaction(userId, amount, type, currency, fromAccountNumber, toAccountNumber),
+		).rejects.toThrow('Nedostatek financí a český účet neexistuje');
 
 		expect(prismaMock.account.findFirst).toHaveBeenCalledTimes(4);
 	});

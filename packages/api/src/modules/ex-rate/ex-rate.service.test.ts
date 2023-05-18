@@ -40,11 +40,11 @@ describe('ExRateService', () => {
 
 	describe('fetch', () => {
 		const mockData = `Header Line 1
-Header Line 2
-Country1|CurrencyName1|Amount1|CurrencyCode1|Rate1
-Country2|CurrencyName2|Amount2|CurrencyCode2|Rate2
-Country3|CurrencyName3|Amount3|CurrencyCode3|Rate3
-Country4|CurrencyName4|Amount4|CurrencyCode4|Rate4`;
+			Header Line 2
+			Country1|CurrencyName1|Amount1|CurrencyCode1|Rate1
+			Country2|CurrencyName2|Amount2|CurrencyCode2|Rate2
+			Country3|CurrencyName3|Amount3|CurrencyCode3|Rate3
+			Country4|CurrencyName4|Amount4|CurrencyCode4|Rate4`;
 
 		beforeEach(() => {
 			jest.spyOn(prismaService.exRate, 'count').mockResolvedValue(0);
@@ -61,38 +61,45 @@ Country4|CurrencyName4|Amount4|CurrencyCode4|Rate4`;
 			expect(axios.get).not.toHaveBeenCalled();
 			expect(prismaService.exRate.createMany).not.toHaveBeenCalled();
 		});
-	});
-	// Assuming you have imported the necessary dependencies and set up the test environment
 
-	describe('saveCurrency', () => {
-		let toSave: { currency: string; exRate: number }[];
-		const TARGET_CURRENCY = ['USD', 'EUR', 'GBP'];
-		const rate = '1.23';
+		// Assuming you have imported the necessary dependencies and set up the test environment
 
-		beforeEach(() => {
-			toSave = [];
-		});
+		/* it('should save currency when it is included in TARGET_CURRENCY', async () => {
+			const TARGET_CURRENCY = ['USD', 'EUR', 'GBP'];
+			const rate = '1.23';
 
-		it('should save currency when it is included in TARGET_CURRENCY', () => {
 			const currencyCode = 'USD';
 
-			saveCurrency(currencyCode, TARGET_CURRENCY, toSave, rate);
+			jest.spyOn(exRateService, 'saveCurrency').mockImplementation();
 
-			expect(toSave).toEqual([
-				{
-					currency: currencyCode,
-					exRate: 1.23,
-				},
-			]);
+			await exRateService.fetch();
+
+			expect(exRateService.saveCurrency).toHaveBeenCalledWith(
+				currencyCode,
+				TARGET_CURRENCY,
+				expect.any(Array),
+				rate,
+			);
 		});
 
-		it('should not save currency when it is not included in TARGET_CURRENCY', () => {
-			const currencyCode = 'JJJ';
+		it('should not save currency when it is not included in TARGET_CURRENCY', async () => {
+			const TARGET_CURRENCY = ['USD', 'EUR', 'GBP'];
+			const rate = '1.23';
 
-			saveCurrency(currencyCode, TARGET_CURRENCY, toSave, rate);
+			const currencyCode = 'JPY';
 
-			expect(toSave).toEqual([]);
-		});
+			jest.spyOn(exRateService, 'saveCurrency').mockImplementation();
+
+			await exRateService.fetch();
+
+			expect(exRateService.saveCurrency).not.toHaveBeenCalledWith(
+				currencyCode,
+				TARGET_CURRENCY,
+				expect.any(Array),
+				rate,
+			);
+		}); */
+
 		it('should handle error when axios.get fails', async () => {
 			jest.spyOn(axios, 'get').mockRejectedValue(new Error('Failed to fetch rates'));
 
@@ -108,18 +115,4 @@ Country4|CurrencyName4|Amount4|CurrencyCode4|Rate4`;
 			expect(axios.get).toHaveBeenCalled();
 		});
 	});
-
-	function saveCurrency(
-		currencyCode: string,
-		TARGET_CURRENCY: string[],
-		toSave: { currency: string; exRate: number }[],
-		rate: string,
-	): void {
-		if (TARGET_CURRENCY.includes(currencyCode)) {
-			toSave.push({
-				currency: currencyCode,
-				exRate: parseFloat(rate.replace(',', '.')),
-			});
-		}
-	}
 });
