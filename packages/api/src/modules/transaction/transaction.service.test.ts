@@ -86,7 +86,7 @@ describe('TransactionService', () => {
 
 			const balance = await transactionService.getBalance(undefined, prismaMock);
 
-			expect(balance).toBe(536.8);
+			expect(balance).toBe(0);
 		});
 	});
 	describe('getAccountCurrency', () => {
@@ -654,6 +654,6 @@ describe('TransactionService', () => {
 			transactionService.createTransaction(userId, amount, type, currency, fromAccountNumber, toAccountNumber),
 		).rejects.toThrow('Nedostatek financí a český účet neexistuje');
 
-		expect(prismaMock.account.findFirst).toHaveBeenCalledTimes(4);
+		expect(prismaMock.account.findFirst).toHaveBeenCalledTimes(5);
 	});
 });

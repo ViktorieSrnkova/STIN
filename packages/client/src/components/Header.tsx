@@ -39,7 +39,7 @@ const Header: React.FC = () => {
 			</Box>
 			<Box display="flex" alignItems="center" style={{ cursor: 'pointer', color: 'white', paddingRight: '25px' }}>
 				<Dropdown overlay={menu} trigger={['click']}>
-					<div>123</div>
+					<div>Možnosti přihlášení</div>
 				</Dropdown>
 			</Box>
 		</HeaderAntd>
