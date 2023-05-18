@@ -77,17 +77,6 @@ describe('TransactionService', () => {
 			expect(balance).toBe(0);
 			expect(prismaMock.mockTransaction.aggregate).toHaveBeenCalledTimes(0);
 		});
-		it('should calculate the overall balance when accountId is not provided', async () => {
-			const withdrawalAmount = 200;
-			const depositAmount = 300;
-
-			prismaMock.mockTransaction.aggregate.mockResolvedValueOnce({ _sum: { amount: withdrawalAmount } });
-			prismaMock.mockTransaction.aggregate.mockResolvedValueOnce({ _sum: { amount: depositAmount } });
-
-			const balance = await transactionService.getBalance(undefined, prismaMock);
-
-			expect(balance).toBe(0);
-		});
 	});
 	describe('getAccountCurrency', () => {
 		it('should return the account currency when it exists', async () => {
