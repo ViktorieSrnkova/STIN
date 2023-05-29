@@ -70,7 +70,7 @@ const CreateTransaction: React.FC = () => {
 			<Box>
 				<Radio.Group value={type} onChange={e => setType(e.target.value)}>
 					<Radio.Button value={TransactionType.Deposit}>Vklad</Radio.Button>
-					<Radio.Button value={TransactionType.Transfer}>Platba</Radio.Button>
+					<Radio.Button value={TransactionType.Transfer}>Převod mezi účty</Radio.Button>
 					<Radio.Button value={TransactionType.Withdrawal}>Výběr</Radio.Button>
 				</Radio.Group>
 				<Divider />

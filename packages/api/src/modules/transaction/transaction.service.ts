@@ -14,32 +14,24 @@ export class TransactionService {
 		transaction?: Omit<PrismaService, '$connect' | '$disconnect' | '$on' | '$transaction' | '$use'>,
 	): Promise<number> {
 		const connection = transaction ?? this.prismaService;
-		const [withdrawal, depoit] = await Promise.all([
-			connection.transaction.aggregate({
-				_sum: {
-					amount: true,
-				},
-				where: {
-					OR: [
-						{ transactionType: TransactionType.WITHDRAWAL },
-						{ transactionType: TransactionType.TRANSFER },
-					],
-					fromAccountId: accountId,
-				},
-			}),
-			connection.transaction.aggregate({
-				_sum: {
-					amount: true,
-				},
-				where: {
-					OR: [{ transactionType: TransactionType.DEPOSIT }, { transactionType: TransactionType.TRANSFER }],
-					toAccountId: accountId,
-				},
-			}),
-			0,
-		]);
-
-		return (withdrawal._sum.amount ?? 0) * -1 + (depoit._sum.amount ?? 0);
+		const dbtransaction = await connection?.transaction.findMany({
+			where: { OR: [{ toAccountId: accountId }, { fromAccountId: accountId }] },
+		});
+		let status = 0;
+		dbtransaction.forEach(element => {
+			if (element.transactionType === 'DEPOSIT') {
+				status += element.amount;
+			} else if (element.transactionType === 'WITHDRAWAL') {
+				status -= element.amount;
+			} else if (element.transactionType === 'TRANSFER') {
+				if (element.toAccountId === accountId) {
+					status += element.amount;
+				} else {
+					status -= element.amount2;
+				}
+			}
+		});
+		return status;
 	}
 	async getAcountCurrency(accountId: string): Promise<string> {
 		const acc = await this.prismaService.account.findFirst({ where: { id: accountId } });
@@ -114,10 +106,23 @@ export class TransactionService {
 					}
 
 					const balance = await this.getBalance(account.id, tx);
+					const contocorentBalance = balance + balance * 0.1;
 
-					if (balance < newAmount && account.currency === 'CZK') {
+					if (contocorentBalance < newAmount && account.currency === 'CZK') {
 						throw new Error('Nedostatek financí');
-					} else if (balance < newAmount && account.currency !== 'CZK') {
+					} else if (balance < newAmount && account.currency === 'CZK') {
+						const negative = (newAmount - balance) * 0.1;
+						await tx.transaction.create({
+							data: {
+								amount: newAmount + negative,
+								beforeAmount: amount,
+								beforeCurrency: currency,
+								transactionType: TransactionType.WITHDRAWAL,
+								fromAccountId: account.id,
+								userId,
+							},
+						});
+					} else if (contocorentBalance < newAmount && account.currency !== 'CZK') {
 						const czechAcc = await tx.account.findFirst({
 							where: { currency: 'CZK' },
 						});
@@ -125,21 +130,36 @@ export class TransactionService {
 							throw new Error('Neexistuje český účet');
 						}
 						const balanceCZ = await this.getBalance(czechAcc?.id, tx);
+						const contocorentBalanceCZ = balanceCZ + balanceCZ * 0.1;
 						const czechAmount =
 							Math.round(amount * (await this.getExRate(currency, czechAcc?.currency)) * 100) / 100;
-						if (balanceCZ < czechAmount) {
-							throw new Error('Nedostatek financí na českém účtu');
+						if (contocorentBalanceCZ < czechAmount) {
+							throw new Error('Není dostatečný zůstatek pro provedení platby');
 						}
-						await tx.transaction.create({
-							data: {
-								amount: czechAmount,
-								beforeAmount: amount,
-								beforeCurrency: currency,
-								transactionType: TransactionType.WITHDRAWAL,
-								fromAccountId: czechAcc?.id,
-								userId,
-							},
-						});
+						if (balanceCZ < czechAmount) {
+							const negativeCZ = (czechAmount - balanceCZ) * 0.1;
+							await tx.transaction.create({
+								data: {
+									amount: czechAmount + negativeCZ,
+									beforeAmount: amount,
+									beforeCurrency: currency,
+									transactionType: TransactionType.WITHDRAWAL,
+									fromAccountId: czechAcc?.id,
+									userId,
+								},
+							});
+						} else {
+							await tx.transaction.create({
+								data: {
+									amount: czechAmount,
+									beforeAmount: amount,
+									beforeCurrency: currency,
+									transactionType: TransactionType.WITHDRAWAL,
+									fromAccountId: czechAcc?.id,
+									userId,
+								},
+							});
+						}
 					} else {
 						await tx.transaction.create({
 							data: {
@@ -200,9 +220,25 @@ export class TransactionService {
 					if (!account2) {
 						throw new Error('Cílový účet nenalezen');
 					}
+					const contocorentBalance = balance + balance * 0.1;
 
-					if (balance < newAmount && account1.currency === 'CZK') {
+					if (contocorentBalance < newAmount && account1.currency === 'CZK') {
 						throw new Error('Nedostatek financí');
+					} else if (balance < newAmount && account1.currency === 'CZK') {
+						const negative = (newAmount - balance) * 0.1;
+						await tx.transaction.create({
+							data: {
+								amount:
+									Math.round(amount * (await this.getExRate(currency, toAcc?.currency)) * 100) / 100,
+								amount2: newAmount + negative,
+								beforeAmount: amount,
+								beforeCurrency: currency,
+								transactionType: TransactionType.TRANSFER,
+								fromAccountId: account1.id,
+								toAccountId: account2.id,
+								userId,
+							},
+						});
 					} else if (balance < newAmount && account1.currency !== 'CZK') {
 						const czechAcc = await tx.account.findFirst({
 							where: { currency: 'CZK' },
@@ -211,25 +247,43 @@ export class TransactionService {
 							throw new Error('Nedostatek financí a český účet neexistuje');
 						}
 						const balanceCZ = await this.getBalance(czechAcc?.id, tx);
-						const czechAmountF = Math.round(amount * (await this.getExRate(currency, 'CZK')) * 100) / 100;
+						const czechAmount = amount * (await this.getExRate(currency, 'CZK'));
+						const czechAmountF = Math.round(czechAmount * 100) / 100;
+						const contocorentBalanceCZ = balanceCZ + balanceCZ * 0.1;
+
 						const czechAmountT =
 							Math.round(amount * (await this.getExRate(currency, account2?.currency)) * 100) / 100;
-						if (balanceCZ < czechAmountF) {
-							throw new Error('Nedostatek financí na českém účtu');
+						if (contocorentBalanceCZ < czechAmount) {
+							throw new Error('Není dostatečný zůstatek pro provedení platby');
 						}
-
-						await tx.transaction.create({
-							data: {
-								amount: czechAmountT,
-								amount2: czechAmountF,
-								transactionType: TransactionType.TRANSFER,
-								fromAccountId: czechAcc?.id,
-								toAccountId: account2.id,
-								userId,
-								beforeCurrency: currency,
-								beforeAmount: amount,
-							},
-						});
+						if (balanceCZ < czechAmount) {
+							const negativeCZ = (czechAmount - balanceCZ) * 0.1;
+							await tx.transaction.create({
+								data: {
+									amount: czechAmountT,
+									amount2: czechAmountF + negativeCZ,
+									beforeAmount: amount,
+									beforeCurrency: currency,
+									transactionType: TransactionType.TRANSFER,
+									fromAccountId: czechAcc?.id,
+									toAccountId: account2.id,
+									userId,
+								},
+							});
+						} else {
+							await tx.transaction.create({
+								data: {
+									amount: czechAmountT,
+									amount2: czechAmountF,
+									transactionType: TransactionType.TRANSFER,
+									fromAccountId: czechAcc?.id,
+									toAccountId: account2.id,
+									userId,
+									beforeCurrency: currency,
+									beforeAmount: amount,
+								},
+							});
+						}
 					} else {
 						await tx.transaction.create({
 							data: {

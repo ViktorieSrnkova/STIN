@@ -311,7 +311,7 @@ describe('TransactionService', () => {
 
 			await expect(
 				transactionService.createTransaction(userId, amount, type, currency, fromAccountNumber),
-			).rejects.toThrow('Nedostatek financí na českém účtu');
+			).rejects.toThrow('Není dostatečný zůstatek pro provedení platby');
 
 			expect(mockFindFirst).toHaveBeenCalledTimes(4);
 			expect(mockFindFirst).toHaveBeenCalledWith({
@@ -570,6 +570,29 @@ describe('TransactionService', () => {
 			transactionService.createTransaction(userId, amount, type, currency, fromAccountNumber, toAccountNumber),
 		).rejects.toThrow('Nedostatek financí');
 	});
+	it('should say that there isnt enough money on czech acc', async () => {
+		const userId = 'exampleUserId';
+		const amount = 100;
+		const type = 'TRANSFER';
+		const currency = 'USD';
+		const fromAccountNumber = 'exampleFromAccountNumber';
+		const toAccountNumber = 'target-account-number';
+
+		const fromAccount = { id: 'exampleFromAccountId', currency: 'USD', balance: 50 };
+		const toAccount = { id: 'target-account-number', currency: 'USD', balance: 200 };
+
+		const mockFindFirst = jest.fn().mockResolvedValue(fromAccount).mockResolvedValueOnce(toAccount);
+		prismaMock.account.findFirst = mockFindFirst as any;
+
+		prismaMock.$transaction = jest.fn().mockImplementation(async callback => {
+			await callback(prismaMock);
+		});
+
+		await expect(
+			transactionService.createTransaction(userId, amount, type, currency, fromAccountNumber, toAccountNumber),
+		).rejects.toThrow('Není dostatečný zůstatek pro provedení platby');
+	});
+
 	// Assuming you have the necessary imports and setup for the test
 
 	/* test('should create a withdrawal transaction', async () => {

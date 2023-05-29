@@ -24,6 +24,18 @@ const QUERY_ACCOUNT_LIST = gql`
 	}
 `;
 
+const QUERY_ACCOUNT_LIST_ALL = gql`
+	query acounts {
+		acounts {
+			id
+			createdAt
+			currency
+			balance
+			accountNumber
+		}
+	}
+`;
+
 const QUERY_ACCOUNT_TRANSACTIONS_LIST = gql`
 	query accounTransactions($accountId: String!) {
 		accounTransactions(accountId: $accountId) {
@@ -43,6 +55,7 @@ const QUERY_ACCOUNT_TRANSACTIONS_LIST = gql`
 const AccountList: React.FC = () => {
 	const [activeAccounts, setActiveAccounts] = useState<string | undefined>();
 	const { data, loading, refetch } = useQuery<{ myAcounts: AccountDto[] }>(QUERY_ACCOUNT_LIST);
+	const { data: dataAccountListAll } = useQuery<{ acounts: AccountDto[] }>(QUERY_ACCOUNT_LIST_ALL);
 	const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 	const { data: transactionsData, loading: transactionsLoading } = useQuery<
 		{ accounTransactions: TransactionDto[] },
@@ -89,8 +102,8 @@ const AccountList: React.FC = () => {
 							title: 'Typ transakce',
 							dataIndex: 'transactionType',
 							render: (text, record) => {
-								const paidAcc = data?.myAcounts.find(_ => _.id === record.toAccountId);
-								const payingAcc = data?.myAcounts.find(_ => _.id === record.fromAccountId);
+								const paidAcc = dataAccountListAll?.acounts.find(_ => _.id === record.toAccountId);
+								const payingAcc = dataAccountListAll?.acounts.find(_ => _.id === record.fromAccountId);
 								if (text === TransactionType.Transfer) {
 									if (record.fromAccountId === activeAccounts) {
 										to = '-';
