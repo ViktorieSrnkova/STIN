@@ -110,7 +110,7 @@ export class TransactionService {
 
 					if (contocorentBalance < newAmount && account.currency === 'CZK') {
 						throw new Error('Nedostatek financí');
-					} else if (balance < newAmount && account.currency === 'CZK') {
+					} else if (balance < newAmount && newAmount < contocorentBalance) {
 						const negative = (newAmount - balance) * 0.1;
 						await tx.transaction.create({
 							data: {
@@ -224,7 +224,7 @@ export class TransactionService {
 
 					if (contocorentBalance < newAmount && account1.currency === 'CZK') {
 						throw new Error('Nedostatek financí');
-					} else if (balance < newAmount && account1.currency === 'CZK') {
+					} else if (balance < newAmount && newAmount < contocorentBalance) {
 						const negative = (newAmount - balance) * 0.1;
 						await tx.transaction.create({
 							data: {
